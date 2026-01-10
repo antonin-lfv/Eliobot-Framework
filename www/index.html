@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Elio Dashboard</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --primary: #00d4ff;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --accent: #9b59b6;
+        }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { color: var(--primary); margin-bottom: 25px; font-weight: 300; }
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        h2 { 
+            font-size: 1rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            color: #888; 
+            margin-top: 0;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        button {
+            border: none;
+            color: white;
+            padding: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        button:active { transform: scale(0.95); filter: brightness(1.2); }
+        
+        .btn-full { grid-column: span 2; }
+        .bg-on { background: var(--success); }
+        .bg-off { background: var(--danger); }
+        .bg-sound { background: var(--accent); }
+        .bg-blue { background: var(--primary); }
+
+        /* Piano Styles */
+
+        .piano-keyboard {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            background: #000;
+            padding: 10px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .piano-key {
+            background: white !important;
+            color: black !important;
+            width: 40px !important;
+            height: 120px !important;
+            padding: 5px !important;
+            font-size: 0.7rem !important;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            border-radius: 0 0 5px 5px !important;
+            flex-shrink: 0;
+        }
+        .piano-key:active {
+            background: #ddd !important;
+            transform: translateY(2px);
+        }
+
+        /* Pad directionnel  */
+        .joystick-wrap{
+        display:flex;
+        justify-content:center;
+        margin-top:16px;
+        }
+
+        .joystick{
+        position:relative;
+        width:220px;
+        height:220px;
+        border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #2a2a2a, #151515 70%);
+        box-shadow: inset 0 0 0 2px #2b2b2b, 0 10px 30px rgba(0,0,0,0.35);
+        }
+
+        .joystick-center{
+        position:absolute;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%);
+        width:78px;
+        height:78px;
+        border-radius:50%;
+        background: radial-gradient(circle at 30% 30%, #3a3a3a, #1f1f1f);
+        box-shadow: inset 0 0 0 2px #333, 0 8px 18px rgba(0,0,0,0.35);
+        pointer-events:none;
+        }
+
+        /* Boutons invisibles carrés, avec triangles en pseudo-éléments */
+        .joy-btn{
+        position:absolute;
+        width:72px;
+        height:72px;
+        border:none;
+        background: transparent;
+        cursor:pointer;
+        padding:0;
+        outline:none;
+        }
+
+        .joy-btn:active{ transform: scale(0.95); filter: brightness(1.2); }
+
+        .joy-up{ left:50%; top:14px; transform:translateX(-50%); }
+        .joy-down{ left:50%; bottom:14px; transform:translateX(-50%); }
+        .joy-left{ left:14px; top:50%; transform:translateY(-50%); }
+        .joy-right{ right:14px; top:50%; transform:translateY(-50%); }
+
+        .joy-btn::before{
+        content:"";
+        position:absolute;
+        left:50%;
+        top:50%;
+        transform:translate(-50%,-50%);
+        width:0;
+        height:0;
+        border-style:solid;
+        filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+        opacity:0.95;
+        }
+
+        /* Triangles */
+        .joy-up::before{
+        border-width: 0 20px 30px 20px;
+        border-color: transparent transparent var(--primary) transparent;
+        }
+        .joy-down::before{
+        border-width: 30px 20px 0 20px;
+        border-color: var(--primary) transparent transparent transparent;
+        }
+        .joy-left::before{
+        border-width: 20px 30px 20px 0;
+        border-color: transparent var(--primary) transparent transparent;
+        }
+        .joy-right::before{
+        border-width: 20px 0 20px 30px;
+        border-color: transparent transparent transparent var(--primary);
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>ELIO BOT</h1>
+
+    <div class="card">
+        <h2>Contrôle Visuel</h2>
+        <div class="grid">
+            <button onclick="send('/on')" class="btn-full bg-on">Allumer le feu</button>
+            <button onclick="send('/off')" class="btn-full bg-off">Éteindre le feu</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Expressions des Yeux</h2>
+        <div class="grid">
+            <button onclick="send('/off')" class="btn-full bg-off">Éteindre la matrice</button>
+            
+            <button onclick="sendEye('happy')" class="bg-blue">Heureux</button>
+            <button onclick="sendEye('love')" class="bg-blue">Amoureux</button>
+            <button onclick="sendEye('angry')" class="bg-blue">Colère</button>
+            <button onclick="sendEye('amazed')" class="bg-blue">Wouah !</button>
+            <button onclick="sendEye('music')" class="bg-blue">Musique</button>
+            <button onclick="sendEye('ko')" class="bg-blue">K.O.</button>
+            <button onclick="sendEye('dizzy')" class="bg-blue">Étourdi</button>
+            <button onclick="sendEye('tired')" class="bg-blue">Fatigué</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Soundboard</h2>
+        <div class="grid">
+            <button onclick="sendSound('laser')" class="bg-sound">Laser</button>
+            <button onclick="sendSound('happy')" class="bg-sound">Happy</button>
+            <button onclick="sendSound('win')" class="bg-sound">Win</button>
+            <button onclick="sendSound('alert')" class="bg-sound">Alerte</button>
+            <button onclick="sendSound('jump')" class="bg-sound">Jump</button>
+            <button onclick="sendSound('hello')" class="bg-sound">Hello</button>
+            <button onclick="sendSound('startup')" class="btn-full bg-blue">Startup Melody</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Mini Piano</h2>
+        <div class="piano-keyboard">
+            <button onclick="sendNote('C4')" class="piano-key">DO</button>
+            <button onclick="sendNote('D4')" class="piano-key">RÉ</button>
+            <button onclick="sendNote('E4')" class="piano-key">MI</button>
+            <button onclick="sendNote('F4')" class="piano-key">FA</button>
+            <button onclick="sendNote('G4')" class="piano-key">SOL</button>
+            <button onclick="sendNote('A4')" class="piano-key">LA</button>
+            <button onclick="sendNote('B4')" class="piano-key">SI</button>
+            <button onclick="sendNote('C5')" class="piano-key">DO</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Déplacement</h2>
+
+        <div class="joystick-wrap">
+            <div class="joystick">
+            <button class="joy-btn joy-up"    onclick="moveStep('forward')"  aria-label="Avancer"></button>
+            <button class="joy-btn joy-down"  onclick="moveStep('backward')" aria-label="Reculer"></button>
+            <button class="joy-btn joy-left"  onclick="moveStep('left')"     aria-label="Gauche"></button>
+            <button class="joy-btn joy-right" onclick="moveStep('right')"    aria-label="Droite"></button>
+
+            <div class="joystick-center"></div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px; color:#888; font-size:0.85rem; text-align:center;">
+            1 clic = 1 déplacement
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour les routes simples (/on, /off)
+        async function send(route) {
+            try {
+                await fetch(route, { method: 'POST' });
+            } catch (e) { console.error("Erreur commande"); }
+        }
+
+        // Fonction pour les sons avec paramètres
+        async function sendSound(name) {
+            try {
+                await fetch('/sound?name=' + name, { method: 'POST' });
+            } catch (e) { console.error("Erreur son"); }
+        }
+
+        // Fonction pour les expressions des yeux avec paramètres
+        async function sendEye(type) {
+            try {
+                await fetch('/eye?type=' + type, { method: 'POST' });
+            } catch (e) { console.error("Erreur yeux"); }
+        }
+        
+        async function send(route) {
+            await fetch(route, { method: 'POST' });
+        }
+
+        // Fonction pour jouer une note de piano
+        async function sendNote(note) {
+            try {
+                await fetch('/piano?note=' + note, { method: 'POST' });
+            } catch (e) { console.error("Erreur piano"); }
+        }
+
+        // Gestion du D-Pad
+        async function post(route) {
+            try { await fetch(route, { method: 'POST' }); }
+            catch (e) { console.error("Erreur commande", e); }
+        }
+
+        async function moveStep(dir) {
+            // Ajuste ici les valeurs par défaut
+            const distance_cm = 15;  // avance/recule
+            const angle_deg = 25;    // gauche/droite
+
+            const value = (dir === "forward" || dir === "backward") ? distance_cm : angle_deg;
+            await post(`/move_step?dir=${encodeURIComponent(dir)}&value=${value}`);
+        }
+    </script>
+</body>
+</html>

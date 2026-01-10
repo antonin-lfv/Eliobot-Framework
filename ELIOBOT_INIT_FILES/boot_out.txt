@@ -1,0 +1,4 @@
+Adafruit CircuitPython 9.1.2 on 2025-12-19; Eliobot with ESP32S3
+Board ID:elio_eliobot_s3
+UID:0115BDE5B884
+boot.py output:

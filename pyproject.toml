@@ -1,0 +1,15 @@
+[project]
+name = "projets-eliobot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.4"
+dependencies = [
+    "adafruit-circuitpython-irremote>=5.0.6",
+    "adafruit-circuitpython-minimqtt>=8.0.3",
+    "adafruit-circuitpython-neopixel>=6.3.18",
+    "ipykernel>=7.1.0",
+    "mpremote>=1.27.0",
+    "paho-mqtt>=2.1.0",
+    "wifi>=0.3.8",
+]

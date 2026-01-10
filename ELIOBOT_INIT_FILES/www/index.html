@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Titre de ta page</title>
+    </head>
+
+    <body>
+        <button id="on">Allumer</button>
+        <button id="off">Éteindre</button>
+    </body>
+</html>
+
+<script>
+  document.getElementById('on').addEventListener('click', function() {
+    fetch('/on', {
+      method: 'POST',
+      body: JSON.stringify({ on: true }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  })
+
+  document.getElementById('off').addEventListener('click', function() {    
+    fetch('/off', {
+      method: 'POST',
+      body: JSON.stringify({ off: true }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  })
+</script>
