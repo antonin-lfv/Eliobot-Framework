@@ -5,7 +5,6 @@ build/
 dist/
 wheels/
 *.egg-info
-
 .DS_Store
 
 # Virtual environments
@@ -13,4 +12,4 @@ wheels/
 
 # environment variables
 .env
-settings.toml
+robot/settings.toml

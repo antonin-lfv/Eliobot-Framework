@@ -1,6 +1,6 @@
 # Eliobot robot Library
 # version = '4.0'
-# CircuitPython = '9.X.X'
+# CircuitPython = '10.X.X'
 #
 # 2023 ELIO SAS
 #
@@ -14,6 +14,7 @@ import json
 import math
 import time
 import wifi
+import mdns
 import adafruit_irremote
 import random
 import neopixel
@@ -304,7 +305,7 @@ class Buzzer:
         """
         self.buzzer = buzzer
 
-    def play_tone(self, frequency, duration, volume):
+    def play_tone(self, frequency, duration, volume=100):
         """
         Play a tone with a certain frequency, duration, and volume.
 
@@ -407,7 +408,152 @@ class Buzzer:
         self.play_tone(1000, 0.03, 100)
         self.play_tone(1300, 0.03, 100)
         self.play_tone(1600, 0.05, 100)
+    
+    def melody_robot_peur(self):
+        self.play_tone(146.83, 0.25)  # ré3
+        self.play_tone(174.61, 0.25)  # fa3
+        self.play_tone(196.00, 0.40)  # sol3
+        time.sleep(0.15)    # pause
+        self.play_tone(207.65, 0.20)  # sol#3
+        self.play_tone(220.00, 0.30)  # la3
+        time.sleep(0.20)    # pause
+        self.play_tone(73.42,  0.50)  # ré2 (grave)
+        
+    def melody_hmm(self):
+        self.play_tone(261.63, 0.40)  # do4
+        self.play_tone(293.66, 0.30)  # ré4
+        self.play_tone(329.63, 0.50)  # mi4
+        self.play_tone(329.63, 0.30)  # mi4
+        self.play_tone(293.66, 0.25)  # ré4
+        self.play_tone(261.63, 0.60)  # do4
+        
+    def melody_alert(self):
+        self.play_tone(440.00, 0.20)  # la4
+        self.play_tone(440.00, 0.20)  # la4
+        self.play_tone(440.00, 0.20)  # la4
+        self.play_tone(349.23, 0.30)  # fa4
+        self.play_tone(392.00, 0.40)
 
+    def sound_error(self):
+        self.play_tone(300, 0.20, 0.02)
+        self.play_tone(250, 0.20, 0.02)
+        
+    def emotion_joie(self):
+        for _ in range(2):
+            self.play_tone(660, 0.12, 0.02)  # E5
+            self.play_tone(784, 0.12, 0.02)  # G5
+            self.play_tone(880, 0.18, 0.03)  # A5
+            time.sleep(0.06)
+        self.play_tone(1046, 0.28, 0.06)
+        
+    def emotion_colere(self):
+        for i in range(6):
+            self.play_tone(150 + i * 5, 0.06, 0.02)   # pulse grave désaccordé légèrement
+            time.sleep(0.02)
+
+    def emotion_surprise(self):
+        self.play_tone(1800, 0.08, 0.01)
+        time.sleep(0.06)
+        self.play_tone(2000, 0.06, 0.01)
+        time.sleep(0.12)
+        self.play_tone(1500, 0.10, 0.05)
+        
+    def emotion_amour(self):
+        self.play_tone(440, 0.25, 0.02)   # A4
+        self.play_tone(523.25, 0.25, 0.02) # C5 (tierce)
+        time.sleep(0.06)
+        self.play_tone(659.25, 0.40, 0.04) # E5
+        time.sleep(0.08)
+        self.play_tone(523.25, 0.35, 0.04)
+        
+    def emotion_degoût(self):
+        for i in range(8):
+            f = 300 + (i % 2) * 40 + random.randint(-15, 15)
+            self.play_tone(f, 0.05, 0.01)
+        time.sleep(0.05)
+        self.play_tone(240, 0.25, 0.05)
+        
+    def emotion_confusion(self):
+        for i in range(10):
+            f = random.choice([330, 370, 440, 520, 600])
+            dur = random.choice([0.05, 0.08, 0.12])
+            self.play_tone(f + random.randint(-10, 10), dur, 0.02)
+        time.sleep(0.06)
+        self.play_tone(280, 0.18, 0.04)
+        
+    def melody_robot_peur(self):
+        self.play_tone(146.83, 0.25, 0.02)  # ré3
+        self.play_tone(174.61, 0.25, 0.02)  # fa3
+        self.play_tone(196.00, 0.40, 0.03)  # sol3
+        time.sleep(0.15)          # pause
+        self.play_tone(207.65, 0.20, 0.02)  # sol#3
+        self.play_tone(220.00, 0.30, 0.03)  # la3
+        time.sleep(0.20)
+        self.play_tone(73.42,  0.50, 0.05)  # ré2 (grave)
+        
+    def endormi(self):
+        base = 660
+        for i in range(5):
+            f = base - i*40 + (5 if i%2==0 else -5)
+            self.play_tone(f, 0.35, 0.06)
+        time.sleep(0.12)
+        # petite conclusion plus grave
+        self.play_tone(220, 0.6, 0.08)
+        
+    def emotion_reveur(self):
+        self.play_tone(330, 0.35, 0.04)
+        time.sleep(0.03)
+        self.play_tone(440, 0.45, 0.05)
+        time.sleep(0.05)
+        self.play_tone(660, 0.55, 0.06)
+        time.sleep(0.08)
+        self.sweep(880, 720, 0.6, 10, 0.02)
+        time.sleep(0.12)
+        self.play_tone(660, 0.55, 0.06)
+        self.play_tone(660, 0.55, 0.06)
+        
+    def emotion_detente(self):
+
+        self.play_tone(160, 0.8, 0.06)   # hum grave et long
+        time.sleep(0.06)
+        self.sweep(200, 700, 0.9, 18, 0.01)
+        time.sleep(0.12)
+        
+    def melody_marseillaise(self):
+
+        # Allons enfants de la Patrie
+        self.play_tone(392, 0.45)   # sol4
+        self.play_tone(392, 0.45)   # sol4
+        self.play_tone(440, 0.55)   # la4
+        self.play_tone(493.9, 0.55) # si4
+        self.play_tone(523.3, 0.75) # do5
+        time.sleep(0.20)
+
+        # Le jour de gloire est arrivé
+        self.play_tone(523.3, 0.45) # do5
+        self.play_tone(493.9, 0.45) # si4
+        self.play_tone(493.9, 0.45) # si4
+        self.play_tone(523.3, 0.55) # do5
+        self.play_tone(587.3, 0.75) # ré5
+        self.play_tone(523.3, 0.75) # do5
+        time.sleep(0.20)
+
+        # Contre nous de la tyrannie
+        self.play_tone(493.9, 0.45) # si4
+        self.play_tone(493.9, 0.45) # si4
+        self.play_tone(493.9, 0.45) # si4
+        self.play_tone(523.3, 0.55) # do5
+        self.play_tone(587.3, 0.60) # ré5
+        self.play_tone(659.3, 0.80) # mi5
+        time.sleep(0.20)
+
+        # L'étendard sanglant est levé !
+        self.play_tone(659.3, 0.45) # mi5
+        self.play_tone(659.3, 0.45) # mi5
+        self.play_tone(659.3, 0.45) # mi5
+        self.play_tone(587.3, 0.55) # ré5
+        self.play_tone(523.3, 0.55) # do5
+        self.play_tone(493.9, 0.80) # si4
 
 class ObstacleSensor:
     def __init__(self, obstacleInput):
@@ -612,9 +758,60 @@ class WiFiConnectivity:
         pass
 
     @staticmethod
+    def connect_and_setup(ssid, password, hostname="elio", mdns_service_port=5000, buzzer=None):
+        """
+        Connect to WiFi with optimized settings and optional mDNS setup.
+
+        :arg
+            ssid (str): The SSID of the WiFi network.
+            password (str): The password of the WiFi network.
+            hostname (str, optional): mDNS hostname (default: "elio"). Set to None to disable mDNS.
+            mdns_service_port (int, optional): Port for mDNS HTTP service advertisement (default: 5000).
+            buzzer (Buzzer, optional): Buzzer instance for sound feedback (startup/error).
+
+        :return
+            tuple: (success: bool, ip_address: str or None, mdns_server: mdns.Server or None)
+
+        :raises
+            Exception: If connection fails after retries.
+        """
+        print(f"Connexion Wi-Fi à {ssid}...")
+
+        # Configure TX power for better signal
+        wifi.radio.tx_power = 8.5
+
+        try:
+            wifi.radio.connect(ssid, password)
+            ip_address = str(wifi.radio.ipv4_address)
+            print(f"✅ Wi-Fi connecté ! IP: {ip_address}")
+
+            # Setup mDNS if hostname provided
+            mdns_server = None
+            if hostname:
+                mdns_server = mdns.Server(wifi.radio)
+                mdns_server.hostname = hostname
+                mdns_server.advertise_service(service_type="_http", protocol="_tcp", port=mdns_service_port)
+                print(f"Robot accessible sur http://{hostname}.local:{mdns_service_port}")
+
+            # Play success sound if buzzer provided
+            if buzzer:
+                buzzer.sound_startup()
+
+            return True, ip_address, mdns_server
+
+        except Exception as e:
+            print(f"❌ Erreur Wi-Fi: {e}")
+
+            # Play error sound if buzzer provided
+            if buzzer:
+                buzzer.sound_error()
+
+            raise
+
+    @staticmethod
     def connect_to_wifi(ssid, password, webpassword):
         """
-        Connect to a wifi network.
+        Write WiFi credentials to settings.toml (requires board restart).
 
         :arg
             ssid (str): The SSID of the WiFi network.

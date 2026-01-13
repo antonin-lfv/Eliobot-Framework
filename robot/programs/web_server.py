@@ -1,0 +1,195 @@
+"""
+Web Server Program - HTTP API to control Eliobot
+Accessible via http://elio.local:5000
+"""
+
+import os
+import wifi
+import socketpool
+import board
+import pwmio
+import analogio
+from adafruit_httpserver import Server, Request, FileResponse, Response
+
+from .base import Program
+from utils import get_eyes_matrices
+from elio import Buzzer, EyesMatrix, Motors, WiFiConnectivity
+
+LED_COLOR = (87, 49, 150)
+
+PIANO_NOTES = {
+    "C4": 261.63, "D4": 293.66, "E4": 329.63, "F4": 349.23,
+    "G4": 392.00, "A4": 440.00, "B4": 493.88, "C5": 523.25
+}
+
+PROGRAM_NAME = "web_server"
+
+
+class WebServer(Program):
+    """Web server program for remote control via HTTP."""
+
+    def setup(self):
+        print("🌐 Starting Web Server program...")
+
+        # Initialisation Matériel
+        self.matrix = EyesMatrix(board.IO2)
+        self.buzzer = Buzzer(pwmio.PWMOut(board.IO17, variable_frequency=True))
+        self.matrix.clear_matrix()
+
+        # Setup des moteurs
+        AIN1 = pwmio.PWMOut(board.IO36)
+        AIN2 = pwmio.PWMOut(board.IO38)
+        BIN1 = pwmio.PWMOut(board.IO35)
+        BIN2 = pwmio.PWMOut(board.IO37)
+        vBatt_pin = analogio.AnalogIn(board.BATTERY)
+        self.motors = Motors(AIN1, AIN2, BIN1, BIN2, vBatt_pin)
+
+        # Setup WiFi + serveur
+        self._setup_wifi()
+        self._setup_server()
+
+        print(f"🌐 Serveur actif sur http://{wifi.radio.ipv4_address}:5000")
+
+    def _setup_wifi(self):
+        SSID = os.getenv("SSID")
+        PASSWORD = os.getenv("PASSWORD")
+
+        try:
+            _, _, self.server_mdns = WiFiConnectivity.connect_and_setup(
+                ssid=SSID,
+                password=PASSWORD,
+                hostname="elio",
+                mdns_service_port=5000,
+                buzzer=self.buzzer
+            )
+        except Exception as e:
+            print(f"WiFi setup failed: {e}")
+            raise
+
+    def _setup_server(self):
+        pool = socketpool.SocketPool(wifi.radio)
+        self.server = Server(pool, "/www", debug=False)
+        self._setup_routes(self.server)
+        self.server.start(str(wifi.radio.ipv4_address))
+
+    def _setup_routes(self, server):
+        @server.route("/")
+        def base(request: Request):
+            return FileResponse(request, "index.html", "/www")
+
+        @server.route("/on", methods=["POST"])
+        def eyes_on(request: Request):
+            eye_matrix_t0, _ = get_eyes_matrices()
+            self.matrix.set_matrix_colors(eye_matrix_t0)
+            return Response(request, "OK")
+
+        @server.route("/off", methods=["POST"])
+        def eyes_off(request: Request):
+            self.matrix.clear_matrix()
+            return Response(request, "OK")
+
+        @server.route("/sound", methods=["POST"])
+        def play_sound(request: Request):
+            name = request.query_params.get("name")
+            print(f"WEB: Son demandé -> {name}")
+
+            if name == "laser": self.buzzer.sound_laser()
+            elif name == "happy": self.buzzer.sound_happy()
+            elif name == "win": self.buzzer.sound_win()
+            elif name == "alert": self.buzzer.sound_alert()
+            elif name == "jump": self.buzzer.sound_jump()
+            elif name == "hello": self.buzzer.sound_hello()
+            elif name == "startup": self.buzzer.sound_startup()
+            elif name == "question": self.buzzer.sound_question()
+            elif name == "error": self.buzzer.sound_error()
+            elif name == "explosion": self.buzzer.sound_explosion()
+            elif name == "land": self.buzzer.sound_land()
+            elif name == "bump": self.buzzer.sound_bump()
+            elif name == "blink": self.buzzer.sound_blink()
+            elif name == "joie": self.buzzer.emotion_joie()
+            elif name == "colere": self.buzzer.emotion_colere()
+            elif name == "surprise": self.buzzer.emotion_surprise()
+            elif name == "amour": self.buzzer.emotion_amour()
+            elif name == "degout": self.buzzer.emotion_degoût()
+            elif name == "confusion": self.buzzer.emotion_confusion()
+            elif name == "reveur": self.buzzer.emotion_reveur()
+            elif name == "detente": self.buzzer.emotion_detente()
+            elif name == "peur": self.buzzer.melody_robot_peur()
+            elif name == "hmm": self.buzzer.melody_hmm()
+            elif name == "melody_alert": self.buzzer.melody_alert()
+            elif name == "marseillaise": self.buzzer.melody_marseillaise()
+            elif name == "endormi": self.buzzer.endormi()
+
+            return Response(request, "OK")
+
+        @server.route("/eye", methods=["POST"])
+        def set_eye_expression(request: Request):
+            emotion = request.query_params.get("type")
+            print(f"WEB: Expression demandée -> {emotion}")
+
+            if emotion == "happy":
+                self.matrix.set_matrix_logo(self.matrix.emotionHappy, LED_COLOR)
+            elif emotion == "love":
+                self.matrix.set_matrix_logo(self.matrix.emotionLove, LED_COLOR)
+            elif emotion == "angry":
+                self.matrix.set_matrix_logo(self.matrix.emotionAngry, LED_COLOR)
+            elif emotion == "amazed":
+                self.matrix.set_matrix_logo(self.matrix.emotionAmazed, LED_COLOR)
+            elif emotion == "music":
+                self.matrix.set_matrix_logo(self.matrix.emotionMusic, LED_COLOR)
+            elif emotion == "ko":
+                self.matrix.set_matrix_logo(self.matrix.emotionKO, LED_COLOR)
+            elif emotion == "dizzy":
+                self.matrix.set_matrix_logo(self.matrix.emotionDizzy, LED_COLOR)
+            elif emotion == "tired":
+                self.matrix.set_matrix_logo(self.matrix.emotionTired, LED_COLOR)
+
+            return Response(request, "Expression OK")
+
+        @server.route("/piano", methods=["POST"])
+        def play_piano(request: Request):
+            note = request.query_params.get("note")
+            print(f"WEB: Note de piano demandée -> {note}")
+            if note in PIANO_NOTES:
+                self.buzzer.play_tone(PIANO_NOTES[note], 0.2, 100)
+            return Response(request, "Note jouée")
+
+        @server.route("/move_step", methods=["POST"])
+        def move_step(request: Request):
+            direction = request.query_params.get("dir", "")
+            value_str = request.query_params.get("value", "")
+
+            default_value = 15 if direction in ("forward", "backward") else 25
+
+            try:
+                value = int(value_str) if value_str else default_value
+            except Exception:
+                value = default_value
+
+            if direction in ("forward", "backward"):
+                if value < 1: value = 1
+                if value > 100: value = 100
+            else:
+                if value < 5: value = 5
+                if value > 180: value = 180
+
+            print(f"WEB: MOVE_STEP dir={direction} value={value}")
+
+            if direction == "forward":
+                self.motors.move_one_step("forward", distance=value)
+            elif direction == "backward":
+                self.motors.move_one_step("backward", distance=value)
+            elif direction == "left":
+                self.motors.turn_one_step("left", angle=value)
+            elif direction == "right":
+                self.motors.turn_one_step("right", angle=value)
+
+            return Response(request, "OK")
+
+    def loop(self):
+        try:
+            self.server.poll()
+        except Exception as e:
+            print(f"Erreur serveur: {e}")
+
+        self.sleep_ms(50)

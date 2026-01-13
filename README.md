@@ -1,151 +1,209 @@
-<h1 align="center"><br>Eliobot (robot ESP32-S3)<br></h1>
+<h1 align="center">
+  <br>
+  🤖 Eliobot Framework v1.1
+  <br>
+</h1>
+
+<h4 align="center">Framework modulaire et extensible pour programmer <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h4>
 
 <p align="center">
-<img src="https://github.com/user-attachments/assets/fbfe0094-2d90-4b59-bac1-fa97b4c256aa" alt="Logo" height="340" >
+  <img src="https://img.shields.io/badge/CircuitPython-9.x-blueviolet.svg" alt="CircuitPython">
+  <img src="https://img.shields.io/badge/Hardware-ESP32--S3-green.svg" alt="ESP32-S3">
+  <img src="https://img.shields.io/badge/Deploy-rsync-orange.svg" alt="rsync">
 </p>
 
-Ce depot contient le code qui tourne sur Eliobot. Le robot execute automatiquement `main.py` au demarrage. Plusieurs programmes de demo sont disponibles via les fichiers `main_*.py`.
+<p align="center">
+  <a href="#-architecture">Architecture</a> •
+  <a href="#-utilisation-rapide">Utilisation</a> •
+  <a href="#%EF%B8%8F-configuration">Configuration</a> •
+  <a href="#-créer-un-programme">Créer un programme</a> •
+  <a href="#-api">API</a>
+</p>
 
-## Prerequis
+<p align="center">
+<img src="https://github.com/user-attachments/assets/fbfe0094-2d90-4b59-bac1-fa97b4c256aa" alt="Eliobot" height="340">
+</p>
 
-- macOS/Linux
-- le robot monte en volume USB sous `/Volumes/ELIOBOT`
-- optionnel: `uv` + `mpremote` pour le REPL
+---
 
-## Structure du depot
+# 🔎 Objectifs
 
-- `main.py`: programme executé au demarrage (copie d'un `main_*.py`)
-- `main_*.py`: exemples prets a l'emploi (web, MQTT, obstacles, animation)
-- `lib/`: bibliotheques CircuitPython + `lib/elio.py`
-- `www/`: interface web servie par `main_www.py`
-- `ELIOBOT_INIT_FILES/`: image de reset usine
-- scripts: `deploy.sh`, `reset_usine.sh`
-- config: `settings.toml`, `config.json`
+- Un **seul point d'entrée** (`main.py`)
+- **Aucune duplication** de scripts
+- Ajout de programmes **sans modifier le framework**
+- Déploiement rapide et sûr
+- Comportement stable même en cas d'erreur (safe mode)
 
-## Choisir le programme a lancer
+<br>
 
-Le fichier execute par CircuitPython est `main.py`. Pour utiliser un autre exemple, copiez-le avant le deploiement.
+# 📁 Architecture
 
-## Deploiement du code sur le robot
-
-1) Une seule fois:
-
-```bash
-chmod +x deploy.sh
+```
+Projets-eliobot/
+├── deploy.sh              # Script de déploiement (override programme, dry-run…)
+├── robot/                 # 🎯 Tout ce qui est copié sur le robot
+│   ├── main.py            # Point d'entrée (auto-discovery + safe mode)
+│   ├── settings.toml      # Configuration (WiFi, programme actif, MQTT…)
+│   ├── config.json        # Calibration capteurs
+│   ├── programs/          # 🧠 Programmes applicatifs
+│   │   ├── base.py        # Classe Program (setup / loop)
+│   │   ├── registry.py    # Auto-discovery des programmes
+│   │   ├── safe_mode.py   # Programme de secours
+│   │   ├── web_server.py  # Serveur web HTTP
+│   │   ├── mqtt_client.py # Client MQTT
+│   │   ├── obstacles.py   # Évitement d'obstacles
+│   │   └── animations_fire.py # Animations LED
+│   ├── lib/               # Bibliothèques (elio.py + Adafruit)
+│   ├── www/               # Interface web
+│   └── sd/                # Fichiers SD
 ```
 
-2) Copier le code:
+<br>
+
+# 🚀 Utilisation rapide
+
+## 1. Choisir un programme
+
+Dans `robot/settings.toml` :
+
+```toml
+PROGRAM = "web_server"
+```
+
+Les programmes disponibles sont **auto-détectés** dans `robot/programs/`.
+
+## 2. Déployer sur le robot
 
 ```bash
 ./deploy.sh
 ```
 
-Ce script copie `main.py`, `config.json`, `eliobot_sounds.py`, `utils.py`, `settings.toml`, ainsi que les dossiers `lib/`, `sd/` et `www/`.
+Synchronisation automatique via `rsync`.
 
-## Reset usine
-
-Le reset usine remet le contenu du robot comme dans `ELIOBOT_INIT_FILES/` (et conserve `settings.toml`).
+## 3. Changer de programme (sans éditer de fichier)
 
 ```bash
-chmod +x reset_usine.sh
-./reset_usine.sh
+./deploy.sh --program obstacles
+./deploy.sh -p animations
 ```
 
-## Configuration
+Afficher ce qui serait copié :
 
-### `settings.toml` (reseau / MQTT)
+```bash
+./deploy.sh --dry-run
+```
 
-Les exemples `main_www.py` et `main_mqtt.py` lisent des variables via `os.getenv`. Placez ce fichier a la racine du robot:
+<br>
+
+# ⚙️ Configuration
+
+### `robot/settings.toml`
 
 ```toml
-SSID = "NomDuReseau"
-PASSWORD = "MotDePasse"
-BROKER_IP = "mon-pc.local" # seulement pour MQTT
-PORT = 1883                # seulement pour MQTT
+PROGRAM = "web_server"
+
+SSID = "VotreReseau"
+PASSWORD = "VotreMotDePasse"
+
+BROKER_IP = "raspberrypi.local"
+PORT = 1883
 ```
 
-Pensez a mettre vos bons identifiants avant le deploiement.
-
-### `config.json` (capteur de ligne)
+### `robot/config.json`
 
 ```json
-{"line_threshold": 75000}
+{
+    "line_threshold": 75000
+}
 ```
 
-Ce seuil est lu par `LineSensor` (voir plus bas). La calibration ecrit automatiquement ce fichier.
+Utilisé pour la calibration du capteur de ligne.
 
-## Utiliser les composants (lib/elio.py)
+<br>
 
-### Moteurs
+# 🧩 Créer un programme
 
-```py
-AIN1 = pwmio.PWMOut(board.IO36)
-AIN2 = pwmio.PWMOut(board.IO38)
-BIN1 = pwmio.PWMOut(board.IO35)
-BIN2 = pwmio.PWMOut(board.IO37)
-vBatt_pin = analogio.AnalogIn(board.BATTERY)
-motors = Motors(AIN1, AIN2, BIN1, BIN2, vBatt_pin)
+### 1. Créer un fichier dans `robot/programs/`
 
-motors.move_forward(60)
-motors.turn_in_place(direction="left")
-motors.move_one_step("forward", distance=20)  # cm
-motors.turn_one_step("right", angle=90)       # degres
-motors.motor_stop()
+```python
+from .base import Program
+from elio import Buzzer
+import board
+import pwmio
+
+PROGRAM_NAME = "mon_programme"
+
+class MonProgramme(Program):
+
+    def setup(self):
+        print("🎉 Mon programme démarre")
+        self.buzzer = Buzzer(pwmio.PWMOut(board.IO17, variable_frequency=True))
+        self.buzzer.sound_startup()
+
+    def loop(self):
+        self.sleep_ms(100)
 ```
 
-### Buzzer
+> Aucune modification de `main.py` ni de `__init__.py` requise.
 
-```py
-buzzer = Buzzer(pwmio.PWMOut(board.IO17, variable_frequency=True))
-buzzer.sound_startup()
-buzzer.play_tone(880, 0.2, 80)
-```
-
-### Matrice de LEDs (yeux)
-
-```py
-matrix = EyesMatrix(board.IO2)
-matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
-matrix.scroll_matrix_text_both_eyes("ELIO", (0, 255, 0), speed=0.08)
-```
-
-### Capteurs d'obstacles
-
-```py
-obstacleInput = [analogio.AnalogIn(pin) for pin in (board.IO4, board.IO5, board.IO6, board.IO7)]
-obstacleSensor = ObstacleSensor(obstacleInput)
-
-if obstacleSensor.get_obstacle(1):  # 0 avant gauche, 1 avant, 2 avant droit, 3 arriere
-    motors.motor_stop()
-```
-
-### Capteurs de ligne
-
-```py
-lineCmd = digitalio.DigitalInOut(board.IO33)
-lineCmd.direction = digitalio.Direction.OUTPUT
-lineInput = [analogio.AnalogIn(pin) for pin in (board.IO10, board.IO11, board.IO12, board.IO13, board.IO14)]
-lineSensor = LineSensor(lineInput, lineCmd, motors)
-
-lineSensor.calibrate_line_sensors()      # ecrit config.json
-lineSensor.follow_line(threshold=75000)
-```
-
-### Telecommande IR
-
-```py
-ir = IRRemote(adafruit_irremote.IRReceiver(board.IOxx))
-code = ir.decode_signal()
-if code == IRRemote.signals["signal_ok"]:
-    buzzer.sound_happy()
-```
-
-## Debug / logs USB
-
-Pour voir les `print` et erreurs en USB:
+### 2. Activer le programme
 
 ```bash
-uv run mpremote connect port:/dev/cu.usbmodemXXXX repl
+./deploy.sh --program mon_programme
 ```
 
-Remplacez le port par le votre (`ls /dev/cu.usbmodem*`).
+<br>
+
+# 📖 API
+
+## Classe `Program`
+
+```python
+class Program:
+    def setup(self):
+        pass
+
+    def loop(self):
+        pass
+
+    def run(self):
+        ...
+```
+
+**Helpers intégrés :**
+- `sleep_ms(ms)`
+- `now_ms()`
+- `every_ms(name, period_ms)`
+
+## Buzzer
+
+```python
+buzzer.play_tone(440, 0.2)
+buzzer.play_tone(440, 0.2, 80)
+
+buzzer.sound_startup()
+buzzer.sound_bump()
+buzzer.sound_happy()
+
+buzzer.melody_hmm()
+buzzer.melody_alert()
+buzzer.melody_marseillaise()
+```
+
+<br>
+
+# 🔧 Debug
+
+Accès REPL USB :
+
+```bash
+uv run mpremote connect port:/dev/cu.usbmodem* repl
+```
+
+<br>
+
+# 📚 Ressources
+
+- [Eliobot](https://eliobot.com)
+- [CircuitPython](https://circuitpython.org)
+- [Adafruit CircuitPython Bundle](https://github.com/adafruit/Adafruit_CircuitPython_Bundle)
