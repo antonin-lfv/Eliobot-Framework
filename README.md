@@ -7,7 +7,7 @@
 <h4 align="center">Framework modulaire et extensible pour programmer <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h4>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/CircuitPython-9.x-blueviolet.svg" alt="CircuitPython">
+  <img src="https://img.shields.io/badge/CircuitPython-10.x-blueviolet.svg" alt="CircuitPython Eliobot">
   <img src="https://img.shields.io/badge/Hardware-ESP32--S3-green.svg" alt="ESP32-S3">
   <img src="https://img.shields.io/badge/Deploy-rsync-orange.svg" alt="rsync">
 </p>
@@ -41,11 +41,11 @@
 ```
 Projets-eliobot/
 ├── deploy.sh              # Script de déploiement (override programme, dry-run…)
-├── robot/                 # 🎯 Tout ce qui est copié sur le robot
+├── robot/                 # Tout ce qui est copié sur le robot
 │   ├── main.py            # Point d'entrée (auto-discovery + safe mode)
 │   ├── settings.toml      # Configuration (WiFi, programme actif, MQTT…)
 │   ├── config.json        # Calibration capteurs
-│   ├── programs/          # 🧠 Programmes applicatifs
+│   ├── programs/          # Programmes applicatifs
 │   │   ├── base.py        # Classe Program (setup / loop)
 │   │   ├── registry.py    # Auto-discovery des programmes
 │   │   ├── safe_mode.py   # Programme de secours
@@ -60,7 +60,7 @@ Projets-eliobot/
 
 <br>
 
-# 🚀 Utilisation rapide
+# Quick Start
 
 ## 1. Choisir un programme
 
@@ -95,7 +95,7 @@ Afficher ce qui serait copié :
 
 <br>
 
-# ⚙️ Configuration
+# Configuration
 
 ### `robot/settings.toml`
 
@@ -121,7 +121,7 @@ Utilisé pour la calibration du capteur de ligne.
 
 <br>
 
-# 🧩 Créer un programme
+# Créer un programme
 
 ### 1. Créer un fichier dans `robot/programs/`
 
@@ -154,7 +154,7 @@ class MonProgramme(Program):
 
 <br>
 
-# 📖 API
+# API
 
 ## Classe `Program`
 
@@ -192,7 +192,7 @@ buzzer.melody_marseillaise()
 
 <br>
 
-# 🔧 Debug
+# Debug
 
 Accès REPL USB :
 
@@ -202,7 +202,7 @@ uv run mpremote connect port:/dev/cu.usbmodem* repl
 
 <br>
 
-# 📚 Ressources
+# Ressources
 
 - [Eliobot](https://eliobot.com)
 - [CircuitPython](https://circuitpython.org)
