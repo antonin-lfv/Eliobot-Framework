@@ -359,10 +359,6 @@ class Buzzer:
         self.play_tone(1100, 0.05)
         self.play_tone(700, 0.15)
 
-    def sound_error(self):
-        self.play_tone(300, 0.2)
-        self.play_tone(250, 0.2)
-
     def sound_explosion(self):
         for i in range(18):
             f = 1200 - i * 60 + random.randint(-30, 30)
@@ -481,16 +477,6 @@ class Buzzer:
         time.sleep(0.06)
         self.play_tone(280, 0.18)
         
-    def melody_robot_peur(self):
-        self.play_tone(146.83, 0.25, 0.2)  # ré3
-        self.play_tone(174.61, 0.25, 0.2)  # fa3
-        self.play_tone(196.00, 0.40, 0.3)  # sol3
-        time.sleep(0.15)          # pause
-        self.play_tone(207.65, 0.20, 0.2)  # sol#3
-        self.play_tone(220.00, 0.30, 0.3)  # la3
-        time.sleep(0.20)
-        self.play_tone(73.42,  0.50, 0.5)  # ré2 (grave)
-        
     def endormi(self):
         base = 660
         for i in range(5):
@@ -513,14 +499,12 @@ class Buzzer:
         self.play_tone(660, 0.55, 0.06)
         
     def emotion_detente(self):
-
         self.play_tone(160, 0.8, 0.06)   # hum grave et long
         time.sleep(0.06)
         self.sweep(200, 700, 0.9, 18, 0.01)
         time.sleep(0.12)
         
     def melody_marseillaise(self):
-
         # Allons enfants de la Patrie
         self.play_tone(392, 0.45)   # sol4
         self.play_tone(392, 0.45)   # sol4
@@ -554,6 +538,7 @@ class Buzzer:
         self.play_tone(587.3, 0.55) # ré5
         self.play_tone(523.3, 0.55) # do5
         self.play_tone(493.9, 0.80) # si4
+
 
 class ObstacleSensor:
     def __init__(self, obstacleInput):
