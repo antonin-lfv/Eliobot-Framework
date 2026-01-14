@@ -305,7 +305,7 @@ class Buzzer:
         """
         self.buzzer = buzzer
 
-    def play_tone(self, frequency, duration, volume=100):
+    def play_tone(self, frequency, duration, volume=12):
         """
         Play a tone with a certain frequency, duration, and volume.
 
@@ -319,7 +319,7 @@ class Buzzer:
         time.sleep(duration)
         self.buzzer.duty_cycle = 0
 
-    def play_note(self, note, duration, NOTES_FREQUENCIES, volume):
+    def play_note(self, note, duration, NOTES_FREQUENCIES, volume=12):
         """
         Play a note from the notes frequencies dictionary with a certain duration and volume.
 
@@ -349,25 +349,25 @@ class Buzzer:
             time.sleep(pause)
 
     def sound_jump(self):
-        self.sweep(600, 1300, 0.2, 12)
+        self.sweep(600, 1300, 0.2)
 
     def sound_laser(self):
-        self.sweep(1600, 300, 0.15, 10)
+        self.sweep(1600, 300, 0.15)
 
     def sound_question(self):
-        self.play_tone(900, 0.1, 100)
-        self.play_tone(1100, 0.05, 100)
-        self.play_tone(700, 0.15, 100)
+        self.play_tone(900, 0.1)
+        self.play_tone(1100, 0.05)
+        self.play_tone(700, 0.15)
 
     def sound_error(self):
-        self.play_tone(300, 0.2, 100)
-        self.play_tone(250, 0.2, 100)
+        self.play_tone(300, 0.2)
+        self.play_tone(250, 0.2)
 
     def sound_explosion(self):
         for i in range(18):
             f = 1200 - i * 60 + random.randint(-30, 30)
-            self.play_tone(f, 0.015, 100)
-
+            self.play_tone(f, 0.015)
+            
     def sound_land(self):
         self.sweep(1000, 400, 0.3, 15)
         self.play_tone(200, 0.1, 100)
@@ -435,70 +435,70 @@ class Buzzer:
         self.play_tone(392.00, 0.40)
 
     def sound_error(self):
-        self.play_tone(300, 0.20, 0.02)
-        self.play_tone(250, 0.20, 0.02)
+        self.play_tone(300, 0.20, 2)
+        self.play_tone(250, 0.20, 2)
         
     def emotion_joie(self):
         for _ in range(2):
-            self.play_tone(660, 0.12, 0.02)  # E5
-            self.play_tone(784, 0.12, 0.02)  # G5
-            self.play_tone(880, 0.18, 0.03)  # A5
+            self.play_tone(660, 0.12, 2)  # E5
+            self.play_tone(784, 0.12, 2)  # G5
+            self.play_tone(880, 0.18, 3)  # A5
             time.sleep(0.06)
         self.play_tone(1046, 0.28, 0.06)
         
     def emotion_colere(self):
         for i in range(6):
-            self.play_tone(150 + i * 5, 0.06, 0.02)   # pulse grave désaccordé légèrement
+            self.play_tone(150 + i * 5, 0.06, 5)   # pulse grave désaccordé légèrement
             time.sleep(0.02)
 
     def emotion_surprise(self):
-        self.play_tone(1800, 0.08, 0.01)
+        self.play_tone(1800, 0.08)
         time.sleep(0.06)
-        self.play_tone(2000, 0.06, 0.01)
+        self.play_tone(2000, 0.06)
         time.sleep(0.12)
-        self.play_tone(1500, 0.10, 0.05)
+        self.play_tone(1500, 0.10)
         
     def emotion_amour(self):
-        self.play_tone(440, 0.25, 0.02)   # A4
-        self.play_tone(523.25, 0.25, 0.02) # C5 (tierce)
+        self.play_tone(440, 0.25)   # A4
+        self.play_tone(523.25, 0.25) # C5 (tierce)
         time.sleep(0.06)
-        self.play_tone(659.25, 0.40, 0.04) # E5
+        self.play_tone(659.25, 0.40) # E5
         time.sleep(0.08)
-        self.play_tone(523.25, 0.35, 0.04)
+        self.play_tone(523.25, 0.35)
         
     def emotion_degoût(self):
         for i in range(8):
             f = 300 + (i % 2) * 40 + random.randint(-15, 15)
-            self.play_tone(f, 0.05, 0.01)
+            self.play_tone(f, 0.05)
         time.sleep(0.05)
-        self.play_tone(240, 0.25, 0.05)
+        self.play_tone(240, 0.25)
         
     def emotion_confusion(self):
         for i in range(10):
             f = random.choice([330, 370, 440, 520, 600])
             dur = random.choice([0.05, 0.08, 0.12])
-            self.play_tone(f + random.randint(-10, 10), dur, 0.02)
+            self.play_tone(f + random.randint(-10, 10), dur)
         time.sleep(0.06)
-        self.play_tone(280, 0.18, 0.04)
+        self.play_tone(280, 0.18)
         
     def melody_robot_peur(self):
-        self.play_tone(146.83, 0.25, 0.02)  # ré3
-        self.play_tone(174.61, 0.25, 0.02)  # fa3
-        self.play_tone(196.00, 0.40, 0.03)  # sol3
+        self.play_tone(146.83, 0.25, 0.2)  # ré3
+        self.play_tone(174.61, 0.25, 0.2)  # fa3
+        self.play_tone(196.00, 0.40, 0.3)  # sol3
         time.sleep(0.15)          # pause
-        self.play_tone(207.65, 0.20, 0.02)  # sol#3
-        self.play_tone(220.00, 0.30, 0.03)  # la3
+        self.play_tone(207.65, 0.20, 0.2)  # sol#3
+        self.play_tone(220.00, 0.30, 0.3)  # la3
         time.sleep(0.20)
-        self.play_tone(73.42,  0.50, 0.05)  # ré2 (grave)
+        self.play_tone(73.42,  0.50, 0.5)  # ré2 (grave)
         
     def endormi(self):
         base = 660
         for i in range(5):
             f = base - i*40 + (5 if i%2==0 else -5)
-            self.play_tone(f, 0.35, 0.06)
+            self.play_tone(f, 0.35, 0.6)
         time.sleep(0.12)
         # petite conclusion plus grave
-        self.play_tone(220, 0.6, 0.08)
+        self.play_tone(220, 0.6, 0.8)
         
     def emotion_reveur(self):
         self.play_tone(330, 0.35, 0.04)

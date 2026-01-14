@@ -276,7 +276,19 @@ sensors.get_obstacle(3)  # Arriere
 Acces REPL USB :
 
 ```bash
-uv run mpremote connect port:/dev/cu.usbmodem* repl
+uv run mpremote connect port:/dev/cu.usbmodem0115BDE5B8841 repl
+```
+
+Pour trouver le nom du port sous macOS :
+
+```bash
+ls /dev/cu.usbmodem*
+```
+
+et sous linux :
+
+```bash
+ls /dev/ttyACM*
 ```
 
 <br>
