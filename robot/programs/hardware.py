@@ -1,8 +1,3 @@
-"""
-Fonctions utilitaires pour initialiser le hardware Eliobot.
-Simple et direct - pas de classes inutiles.
-"""
-
 import time
 import board
 import pwmio

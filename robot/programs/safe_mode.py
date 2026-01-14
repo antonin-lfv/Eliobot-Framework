@@ -1,8 +1,3 @@
-"""
-Safe mode: diagnostics minimal, garde le robot en vie.
-Pas de WiFi, pas de MQTT. Juste des prints pour debug.
-"""
-
 import time
 
 PROGRAM_NAME = "safe"

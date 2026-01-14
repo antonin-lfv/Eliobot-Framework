@@ -1,11 +1,3 @@
-"""
-Eliobot Main Entry Point (Framework v1.2)
-- Lit PROGRAM depuis settings.toml (os.getenv)
-- Decouvre les programmes dans /programs
-- Execute le programme selectionne
-- Fallback en safe mode si invalide/crash
-"""
-
 import os
 import time
 
@@ -39,7 +31,6 @@ def _run_program(program_name, programs):
     run_func = programs[program_name]
     print(f"Chargement: {program_name}")
 
-    # Appelle directement la fonction run()
     run_func()
     return True
 
@@ -65,5 +56,4 @@ def main():
                 time.sleep(1)
 
 
-# Execution
 main()

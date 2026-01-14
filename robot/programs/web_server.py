@@ -1,8 +1,3 @@
-"""
-Web Server Program - API HTTP pour controler Eliobot
-Accessible via http://elio.local:5000
-"""
-
 import os
 import wifi
 import socketpool
@@ -50,6 +45,8 @@ def run():
     # Setup serveur HTTP
     pool = socketpool.SocketPool(wifi.radio)
     server = Server(pool, "/www", debug=False)
+    
+    # Accessible via http://elio.local:5000
 
     # ============================================================
     # ROUTES
@@ -175,7 +172,6 @@ def run():
     server.start(str(wifi.radio.ipv4_address))
     print(f"Serveur actif sur http://{wifi.radio.ipv4_address}:5000")
 
-    # Boucle principale
     while True:
         try:
             server.poll()

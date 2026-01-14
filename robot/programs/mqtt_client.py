@@ -1,9 +1,3 @@
-"""
-MQTT Client Program - Controle Eliobot via broker MQTT
-Subscribes to: elio/commandes
-Publishes to: elio/etat/obstacle
-"""
-
 import os
 import wifi
 import socketpool

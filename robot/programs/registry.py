@@ -1,15 +1,3 @@
-"""
-Programme registry & auto-discovery pour Eliobot.
-
-Regle simple:
-- Tout fichier .py dans programs/ (sauf __init__.py, registry.py, hardware.py)
-- Qui definit une fonction run()
-- Sera decouvert automatiquement
-
-Le nom du programme = nom du fichier sans .py
-Ou PROGRAM_NAME si defini explicitement dans le fichier.
-"""
-
 import os
 
 

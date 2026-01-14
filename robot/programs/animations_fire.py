@@ -1,6 +1,3 @@
-"""
-Animations Program - Demo simple avec animations LED
-"""
 
 from .hardware import setup_matrix, setup_buzzer, sleep_ms, every_ms
 from utils import get_eyes_matrices

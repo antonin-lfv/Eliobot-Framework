@@ -1,8 +1,3 @@
-"""
-Obstacles Avoidance Program - Navigation autonome
-Le robot avance et evite les obstacles automatiquement
-"""
-
 from .hardware import (
     setup_motors, setup_buzzer, setup_matrix, setup_obstacle_sensors,
     sleep_ms, now_ms
