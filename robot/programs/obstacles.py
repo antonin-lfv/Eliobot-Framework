@@ -1,102 +1,85 @@
 """
-Obstacles Avoidance Program - Autonomous navigation
-Robot moves forward and avoids obstacles automatically
+Obstacles Avoidance Program - Navigation autonome
+Le robot avance et evite les obstacles automatiquement
 """
 
-import time
-import board
-import pwmio
-import analogio
-
-from .base import Program
-from elio import Motors, Buzzer, ObstacleSensor, EyesMatrix
+from .hardware import (
+    setup_motors, setup_buzzer, setup_matrix, setup_obstacle_sensors,
+    sleep_ms, now_ms
+)
 
 LED_COLOR = (87, 49, 150)
 
 PROGRAM_NAME = "obstacles"
 
 
-class ObstaclesAvoidance(Program):
-    """Autonomous obstacle avoidance program."""
+def run():
+    print("Starting Obstacles Avoidance program...")
 
-    def setup(self):
-        print("🚗 Starting Obstacles Avoidance program...")
+    # Setup hardware
+    matrix = setup_matrix()
+    buzzer = setup_buzzer()
+    motors = setup_motors()
+    obstacle_sensor = setup_obstacle_sensors()
 
-        # Initialisation Matériel
-        self.matrix = EyesMatrix(board.IO2)
-        self.buzzer = Buzzer(pwmio.PWMOut(board.IO17, variable_frequency=True))
+    buzzer.sound_startup()
 
-        # Setup des moteurs
-        AIN1 = pwmio.PWMOut(board.IO36)
-        AIN2 = pwmio.PWMOut(board.IO38)
-        BIN1 = pwmio.PWMOut(board.IO35)
-        BIN2 = pwmio.PWMOut(board.IO37)
-        vBatt_pin = analogio.AnalogIn(board.BATTERY)
-        self.motors = Motors(AIN1, AIN2, BIN1, BIN2, vBatt_pin)
+    # Etat pour gerer une manoeuvre en cours
+    maneuver_until_ms = 0
+    maneuver_action = None
 
-        # Setup capteurs d'obstacles
-        obstacleInput = [analogio.AnalogIn(pin) for pin in (board.IO4, board.IO5, board.IO6, board.IO7)]
-        self.obstacleSensor = ObstacleSensor(obstacleInput)
-        # 0: avant gauche, 1: avant, 2: avant droit, 3: arrière
+    # Boucle principale
+    while True:
+        now = now_ms()
 
-        self.buzzer.sound_startup()
-
-        # Petit état interne pour gérer une "manœuvre" en cours
-        self._maneuver_until_ms = 0
-        self._maneuver_action = None  # str ou None
-
-    def _start_maneuver(self, action: str, duration_ms: int):
-        self._maneuver_action = action
-        self._maneuver_until_ms = self.now_ms() + duration_ms
-
-    def loop(self):
-        now = self.now_ms()
-
-        # Si une manœuvre est en cours, on attend sa fin
-        if self._maneuver_action is not None:
-            if now >= self._maneuver_until_ms:
-                self._maneuver_action = None
-                self.matrix.clear_matrix()
+        # Si une manoeuvre est en cours, on attend sa fin
+        if maneuver_action is not None:
+            if now >= maneuver_until_ms:
+                maneuver_action = None
+                matrix.clear_matrix()
             else:
-                self.sleep_ms(10)
-                return
+                sleep_ms(10)
+                continue
 
-        # Mode normal : avance + check obstacles
-        self.matrix.set_matrix_logo(self.matrix.emotionConfused, LED_COLOR)
-        self.motors.move_forward()
+        # Mode normal: avance + check obstacles
+        matrix.set_matrix_logo(matrix.emotionConfused, LED_COLOR)
+        motors.move_forward()
 
-        if self.obstacleSensor.get_obstacle(0):
-            self.motors.motor_stop()
-            self.buzzer.sound_bump()
+        if obstacle_sensor.get_obstacle(0):
+            motors.motor_stop()
+            buzzer.sound_bump()
             print("obstacle 0 detected")
-            self.matrix.set_matrix_logo(self.matrix.arrowRight, LED_COLOR)
-            self.motors.turn_in_place(direction="left")
-            self._start_maneuver("turn_left", 1000)
+            matrix.set_matrix_logo(matrix.arrowRight, LED_COLOR)
+            motors.turn_in_place(direction="left")
+            maneuver_action = "turn_left"
+            maneuver_until_ms = now + 1000
 
-        elif self.obstacleSensor.get_obstacle(1):
-            self.motors.motor_stop()
-            self.buzzer.sound_bump()
+        elif obstacle_sensor.get_obstacle(1):
+            motors.motor_stop()
+            buzzer.sound_bump()
             print("obstacle 1 detected")
-            self.matrix.set_matrix_logo(self.matrix.arrowDown, LED_COLOR)
-            self.motors.move_backward()
-            self.motors.turn_in_place(direction="right")
-            self._start_maneuver("back_and_turn_right", 1000)
+            matrix.set_matrix_logo(matrix.arrowDown, LED_COLOR)
+            motors.move_backward()
+            motors.turn_in_place(direction="right")
+            maneuver_action = "back_and_turn_right"
+            maneuver_until_ms = now + 1000
 
-        elif self.obstacleSensor.get_obstacle(2):
-            self.motors.motor_stop()
-            self.buzzer.sound_bump()
+        elif obstacle_sensor.get_obstacle(2):
+            motors.motor_stop()
+            buzzer.sound_bump()
             print("obstacle 2 detected")
-            self.matrix.set_matrix_logo(self.matrix.arrowLeft, LED_COLOR)
-            self.motors.turn_in_place(direction="right")
-            self._start_maneuver("turn_right", 1000)
+            matrix.set_matrix_logo(matrix.arrowLeft, LED_COLOR)
+            motors.turn_in_place(direction="right")
+            maneuver_action = "turn_right"
+            maneuver_until_ms = now + 1000
 
-        elif self.obstacleSensor.get_obstacle(3):
-            self.motors.motor_stop()
-            self.buzzer.sound_bump()
+        elif obstacle_sensor.get_obstacle(3):
+            motors.motor_stop()
+            buzzer.sound_bump()
             print("obstacle 3 detected")
-            self.matrix.set_matrix_logo(self.matrix.arrowUp, LED_COLOR)
-            self.motors.move_forward()
-            self._start_maneuver("forward", 1000)
+            matrix.set_matrix_logo(matrix.arrowUp, LED_COLOR)
+            motors.move_forward()
+            maneuver_action = "forward"
+            maneuver_until_ms = now + 1000
 
-        # Respire
-        self.sleep_ms(10)
+        sleep_ms(10)

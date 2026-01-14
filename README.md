@@ -1,10 +1,10 @@
 <h1 align="center">
   <br>
-  🤖 Eliobot Framework v1.1
+  Eliobot Framework v1.2
   <br>
 </h1>
 
-<h4 align="center">Framework modulaire et extensible pour programmer <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h4>
+<h4 align="center">Framework simple et direct pour programmer <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h4>
 
 <p align="center">
   <img src="https://img.shields.io/badge/CircuitPython-10.x-blueviolet.svg" alt="CircuitPython Eliobot">
@@ -26,34 +26,33 @@
 
 ---
 
-# 🔎 Objectifs
+# Objectifs
 
-- Un **seul point d'entrée** (`main.py`)
-- **Aucune duplication** de scripts
+- Un **seul point d'entree** (`main.py`)
 - Ajout de programmes **sans modifier le framework**
-- Déploiement rapide et sûr
-- Comportement stable même en cas d'erreur (safe mode)
+- Deploiement rapide et sûr via `rsync`
+- Comportement stable meme en cas d'erreur (safe mode)
 
 <br>
 
-# 📁 Architecture
+# Architecture
 
 ```
 Projets-eliobot/
-├── deploy.sh              # Script de déploiement (override programme, dry-run…)
-├── robot/                 # Tout ce qui est copié sur le robot
-│   ├── main.py            # Point d'entrée (auto-discovery + safe mode)
-│   ├── settings.toml      # Configuration (WiFi, programme actif, MQTT…)
+├── deploy.sh              # Script de deploiement (override programme, dry-run...)
+├── robot/                 # Tout ce qui est copie sur le robot
+│   ├── main.py            # Point d'entree (auto-discovery + safe mode)
+│   ├── settings.toml      # Configuration (WiFi, programme actif, MQTT...)
 │   ├── config.json        # Calibration capteurs
 │   ├── programs/          # Programmes applicatifs
-│   │   ├── base.py        # Classe Program (setup / loop)
+│   │   ├── hardware.py    # Fonctions setup (motors, buzzer, matrix...)
 │   │   ├── registry.py    # Auto-discovery des programmes
 │   │   ├── safe_mode.py   # Programme de secours
 │   │   ├── web_server.py  # Serveur web HTTP
 │   │   ├── mqtt_client.py # Client MQTT
-│   │   ├── obstacles.py   # Évitement d'obstacles
+│   │   ├── obstacles.py   # Evitement d'obstacles
 │   │   └── animations_fire.py # Animations LED
-│   ├── lib/               # Bibliothèques (elio.py + Adafruit)
+│   ├── lib/               # Bibliotheques (elio.py + Adafruit)
 │   ├── www/               # Interface web
 │   └── sd/                # Fichiers SD
 ```
@@ -70,9 +69,9 @@ Dans `robot/settings.toml` :
 PROGRAM = "web_server"
 ```
 
-Les programmes disponibles sont **auto-détectés** dans `robot/programs/`.
+Les programmes disponibles sont **auto-detectes** dans `robot/programs/`.
 
-## 2. Déployer sur le robot
+## 2. Deployer sur le robot
 
 ```bash
 ./deploy.sh
@@ -80,14 +79,14 @@ Les programmes disponibles sont **auto-détectés** dans `robot/programs/`.
 
 Synchronisation automatique via `rsync`.
 
-## 3. Changer de programme (sans éditer de fichier)
+## 3. Changer de programme (sans editer de fichier)
 
 ```bash
 ./deploy.sh --program obstacles
-./deploy.sh -p animations
+./deploy.sh -p animations_fire
 ```
 
-Afficher ce qui serait copié :
+Afficher ce qui serait copié sans faire de modifications :
 
 ```bash
 ./deploy.sh --dry-run
@@ -117,36 +116,38 @@ PORT = 1883
 }
 ```
 
-Utilisé pour la calibration du capteur de ligne.
+Utilise pour la calibration du capteur de ligne.
 
 <br>
 
-# Créer un programme
+# Creer un programme
 
-### 1. Créer un fichier dans `robot/programs/`
+## Exemple minimal
+
+Creer un fichier dans `robot/programs/` :
 
 ```python
-from .base import Program
-from elio import Buzzer
-import board
-import pwmio
+# programs/mon_programme.py
+from .hardware import setup_buzzer, setup_matrix, sleep_ms
 
-PROGRAM_NAME = "mon_programme"
+PROGRAM_NAME = "mon_programme"  # Optionnel, sinon = nom du fichier
 
-class MonProgramme(Program):
+def run():
+    # Setup
+    buzzer = setup_buzzer()
+    matrix = setup_matrix()
 
-    def setup(self):
-        print("🎉 Mon programme démarre")
-        self.buzzer = Buzzer(pwmio.PWMOut(board.IO17, variable_frequency=True))
-        self.buzzer.sound_startup()
+    buzzer.sound_startup()
 
-    def loop(self):
-        self.sleep_ms(100)
+    # Boucle principale
+    while True:
+        # Ta logique ici
+        sleep_ms(100)
 ```
 
 > Aucune modification de `main.py` ni de `__init__.py` requise.
 
-### 2. Activer le programme
+## Deploiement sur le robot
 
 ```bash
 ./deploy.sh --program mon_programme
@@ -156,45 +157,123 @@ class MonProgramme(Program):
 
 # API
 
-## Classe `Program`
+## Fonctions hardware (`programs/hardware.py`)
 
 ```python
-class Program:
-    def setup(self):
-        pass
-
-    def loop(self):
-        pass
-
-    def run(self):
-        ...
+from .hardware import (
+    setup_motors,           # Retourne l'objet Motors
+    setup_buzzer,           # Retourne l'objet Buzzer
+    setup_matrix,           # Retourne l'objet EyesMatrix
+    setup_obstacle_sensors, # Retourne l'objet ObstacleSensor
+    sleep_ms,               # Pause en millisecondes
+    now_ms,                 # Temps actuel en millisecondes
+    every_ms,               # Timer periodique non-bloquant
+)
 ```
 
-**Helpers intégrés :**
-- `sleep_ms(ms)`
-- `now_ms()`
-- `every_ms(name, period_ms)`
+### Exemple avec timer periodique
+
+```python
+from .hardware import setup_matrix, sleep_ms, every_ms
+
+def run():
+    matrix = setup_matrix()
+    toggle = False
+
+    while True:
+        # Execute toutes les 500ms
+        if every_ms("blink", 500):
+            if toggle:
+                matrix.clear_matrix()
+            else:
+                matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
+            toggle = not toggle
+
+        sleep_ms(10)
+```
+
+Ici, l'affichage de la matrice clignote toutes les 500ms sans bloquer la boucle principale.
 
 ## Buzzer
 
 ```python
-buzzer.play_tone(440, 0.2)
-buzzer.play_tone(440, 0.2, 80)
+buzzer = setup_buzzer()
 
+# Sons basiques
+buzzer.play_tone(440, 0.2)        # Frequence, duree
+buzzer.play_tone(440, 0.2, 80)    # Frequence, duree, volume
+
+# Effets sonores
 buzzer.sound_startup()
 buzzer.sound_bump()
 buzzer.sound_happy()
+buzzer.sound_laser()
+buzzer.sound_alert()
 
+# Melodies
 buzzer.melody_hmm()
 buzzer.melody_alert()
 buzzer.melody_marseillaise()
+
+# Emotions
+buzzer.emotion_joie()
+buzzer.emotion_colere()
+buzzer.emotion_surprise()
+```
+
+## Motors
+
+```python
+motors = setup_motors()
+
+# Deplacement
+motors.move_forward(speed=100)
+motors.move_backward(speed=100)
+motors.turn_left(speed=100)
+motors.turn_right(speed=100)
+motors.motor_stop()
+
+# Deplacement precis
+motors.move_one_step("forward", distance=20)  # en cm
+motors.turn_one_step("left", angle=90)        # en degres
+```
+
+## EyesMatrix
+
+```python
+matrix = setup_matrix()
+
+# Affichage
+matrix.clear_matrix()
+matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
+
+# Emotions disponibles
+matrix.emotionHappy
+matrix.emotionSad
+matrix.emotionAngry
+matrix.emotionLove
+matrix.emotionAmazed
+matrix.emotionConfused
+# ... et plus
+```
+
+## ObstacleSensor
+
+```python
+sensors = setup_obstacle_sensors()
+
+# Detection (True si obstacle)
+sensors.get_obstacle(0)  # Avant gauche
+sensors.get_obstacle(1)  # Avant
+sensors.get_obstacle(2)  # Avant droit
+sensors.get_obstacle(3)  # Arriere
 ```
 
 <br>
 
 # Debug
 
-Accès REPL USB :
+Acces REPL USB :
 
 ```bash
 uv run mpremote connect port:/dev/cu.usbmodem* repl
