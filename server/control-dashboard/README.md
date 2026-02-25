@@ -4,7 +4,7 @@ Dashboard FastAPI + broker MQTT pour monitorer et contrôler le robot en temps r
 
 <div align="center">
   <a>
-    <img src="server/control-dashboard/image_dashboard.png" alt="preview">
+    <img src="./image_dashboard.png" alt="preview">
   </a>
 </div>
 
