@@ -9,192 +9,305 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f0f2f5;
-      color: #2c3e50;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: #eef2ff;
+      background-image:
+        radial-gradient(ellipse at 12% 20%, rgba(147, 197, 253, 0.55) 0%, transparent 48%),
+        radial-gradient(ellipse at 88% 75%, rgba(165, 180, 252, 0.45) 0%, transparent 48%),
+        radial-gradient(ellipse at 50% 105%, rgba(196, 181, 253, 0.3) 0%, transparent 40%),
+        radial-gradient(ellipse at 65% 5%,  rgba(186, 230, 253, 0.4) 0%, transparent 40%);
+      color: #0f172a;
       height: 100dvh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
     }
 
-    /* ── Header ───────────────────────────────────────────── */
+    /* ── Scrollbar ─────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.2); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.38); }
+
+    /* ── Header ────────────────────────────────────────────── */
     .header {
-      background: white;
-      border-bottom: 1px solid #e0e0e0;
-      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.68);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.85);
+      padding: 12px 26px;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 19px;
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.9), 0 4px 20px rgba(99, 102, 241, 0.08);
     }
-    .header-title { font-size: 1.25rem; font-weight: 700; color: #7d3c98; white-space: nowrap; }
-    .header-mode  { font-size: 0.82rem; color: #666; }
-    .status-badge {
-      padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+    .header-logo { height: 34px; width: auto; display: block; }
+    .header-title {
+      font-size: 1.32rem; font-weight: 700;
+      color: #1d4ed8;
       white-space: nowrap;
+      letter-spacing: -0.02em;
     }
-    .status-badge.connected    { background: #d5f5e3; color: #1e8449; }
-    .status-badge.disconnected { background: #fadbd8; color: #c0392b; }
-    .status-badge.warning      { background: #fef3cd; color: #856404; }
-    .last-signal { font-size: 0.73rem; color: #999; white-space: nowrap; }
-    .battery-display { margin-left: auto; font-size: 0.88rem; white-space: nowrap; }
+    .header-mode  { font-size: 0.98rem; color: #64748b; }
+    .header-mode strong { color: #1e293b; }
 
-    /* ── Layout ───────────────────────────────────────────── */
+    .status-badge {
+      padding: 4px 14px 4px 10px; border-radius: 20px; font-size: 0.89rem; font-weight: 600;
+      white-space: nowrap; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .status-badge::before {
+      content: ''; display: block; width: 7px; height: 7px;
+      border-radius: 50%; background: currentColor; flex-shrink: 0;
+    }
+    .status-badge.connected {
+      background: rgba(52, 211, 153, 0.12); color: #059669;
+      border: 1px solid rgba(52, 211, 153, 0.28);
+    }
+    .status-badge.disconnected {
+      background: rgba(220, 38, 38, 0.09); color: #b91c1c;
+      border: 1px solid rgba(220, 38, 38, 0.22);
+    }
+    .status-badge.warning {
+      background: rgba(217, 119, 6, 0.1); color: #b45309;
+      border: 1px solid rgba(217, 119, 6, 0.25);
+    }
+    .last-signal { font-size: 0.85rem; color: #94a3b8; white-space: nowrap; }
+    .battery-display { margin-left: auto; font-size: 1rem; white-space: nowrap; color: #475569; display: flex; align-items: center; gap: 7px; }
+
+    /* ── Layout ────────────────────────────────────────────── */
     .layout { display: flex; flex: 1; overflow: hidden; }
 
-    /* ── Sidebar ──────────────────────────────────────────── */
+    /* ── Sidebar ───────────────────────────────────────────── */
     .sidebar {
-      width: 210px;
-      background: white;
-      border-right: 1px solid #e0e0e0;
-      padding: 14px 12px;
+      width: 214px;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-right: 1px solid rgba(255, 255, 255, 0.8);
+      padding: 16px 12px;
       overflow-y: auto;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       gap: 0;
+      box-shadow: inset -1px 0 0 rgba(255,255,255,0.7), 3px 0 18px rgba(99, 102, 241, 0.06);
     }
     .sidebar-section { margin-bottom: 14px; }
     .sidebar-label {
-      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
-      color: #7d3c98; font-weight: 600; margin-bottom: 8px;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: #2563eb; font-weight: 700; margin-bottom: 8px;
     }
 
     .sidebar select {
-      width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid #ddd;
-      font-size: 0.83rem; background: white; cursor: pointer;
+      width: 100%; padding: 8px 10px; border-radius: 9px;
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      font-size: 0.82rem;
+      background: rgba(255, 255, 255, 0.75);
+      color: #1e293b;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
     }
+    .sidebar select:focus {
+      border-color: rgba(37, 99, 235, 0.4);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
     .btn {
-      display: block; width: 100%; padding: 7px 10px; border-radius: 6px; border: none;
-      font-size: 0.83rem; cursor: pointer; font-weight: 600; text-align: center;
-      transition: background 0.15s, opacity 0.15s;
+      display: block; width: 100%; padding: 8px 10px; border-radius: 9px; border: none;
+      font-size: 0.82rem; cursor: pointer; font-weight: 600; text-align: center;
+      transition: all 0.15s ease;
       margin-top: 6px;
     }
-    .btn-primary   { background: #7d3c98; color: white; }
-    .btn-primary:hover { background: #6c3483; }
-    .btn-secondary { background: #ecf0f1; color: #2c3e50; }
-    .btn-secondary:hover { background: #dde1e3; }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.7);
+      color: #334155;
+      border: 1px solid rgba(99, 102, 241, 0.18);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(37, 99, 235, 0.28);
+      transform: translateY(-1px);
+    }
+    .btn-secondary:active { transform: translateY(0); }
 
     /* Speed slider */
     .speed-row {
       display: flex; justify-content: space-between;
-      font-size: 0.75rem; color: #888; margin-bottom: 4px;
+      font-size: 0.72rem; color: #94a3b8; margin-bottom: 5px;
     }
-    input[type=range] { width: 100%; accent-color: #7d3c98; }
+    input[type=range] { width: 100%; accent-color: #3b82f6; cursor: pointer; }
 
-    /* ── D-Pad ────────────────────────────────────────────── */
+    /* ── D-Pad ──────────────────────────────────────────────── */
     .dpad {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-rows: auto auto auto;
-      gap: 4px;
+      gap: 5px;
     }
     .dpad-btn {
-      padding: 0; height: 38px; border-radius: 6px; border: none;
-      font-size: 1.1rem; cursor: pointer; background: #7d3c98; color: white;
-      transition: background 0.1s, transform 0.05s;
+      padding: 0; height: 40px; border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      background: linear-gradient(145deg, rgba(96, 165, 250, 0.75), rgba(37, 99, 235, 0.85));
+      color: white;
+      transition: all 0.12s ease;
       user-select: none; -webkit-user-select: none; touch-action: none;
+      box-shadow: 0 3px 10px rgba(37, 99, 235, 0.2), inset 0 1px 0 rgba(255,255,255,0.35);
+      display: flex; align-items: center; justify-content: center;
     }
-    .dpad-btn:hover:not(:disabled) { background: #6c3483; }
+    .dpad-btn svg { width: 18px; height: 18px; pointer-events: none; }
+    .dpad-btn:hover:not(:disabled) {
+      background: linear-gradient(145deg, rgba(147, 197, 253, 0.85), rgba(59, 130, 246, 0.92));
+      box-shadow: 0 5px 16px rgba(37, 99, 235, 0.32);
+      transform: translateY(-1px);
+    }
     .dpad-btn:active:not(:disabled) { transform: scale(0.93); }
-    .dpad-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .dpad-btn.stop { background: #e74c3c; }
-    .dpad-btn.stop:hover:not(:disabled) { background: #c0392b; }
-    .dpad-empty { /* placeholder vide */ }
+    .dpad-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+    .dpad-empty { }
 
     .held-indicator {
-      text-align: center; font-size: 0.78rem; color: #7d3c98;
+      text-align: center; font-size: 0.73rem; color: #2563eb;
       font-weight: 600; min-height: 18px; margin: 4px 0;
+      letter-spacing: 0.03em;
     }
 
-    .divider { height: 1px; background: #eee; margin: 10px 0; }
+    .divider { height: 1px; background: rgba(99, 102, 241, 0.1); margin: 10px 0; }
 
-    /* ── Main content ─────────────────────────────────────── */
+    /* ── Main content ──────────────────────────────────────── */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
 
-    /* ── Tabs ─────────────────────────────────────────────── */
+    /* ── Tabs ──────────────────────────────────────────────── */
     .tabs {
-      display: flex; border-bottom: 2px solid #e0e0e0;
-      background: white; flex-shrink: 0;
+      display: flex; border-bottom: 1px solid rgba(255, 255, 255, 0.75);
+      background: rgba(255, 255, 255, 0.58);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      flex-shrink: 0;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.85), 0 3px 12px rgba(99,102,241,0.06);
     }
     .tab-btn {
-      padding: 10px 20px; border: none; background: none; font-size: 0.88rem;
-      font-weight: 500; cursor: pointer; color: #666;
-      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      padding: 11px 24px; border: none; background: none; font-size: 0.84rem;
+      font-weight: 500; cursor: pointer; color: #94a3b8;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
       transition: color 0.15s;
+      letter-spacing: 0.01em;
     }
-    .tab-btn.active { color: #7d3c98; border-bottom-color: #7d3c98; }
-    .tab-btn:hover { color: #7d3c98; }
+    .tab-btn.active { color: #1d4ed8; border-bottom-color: #3b82f6; font-weight: 600; }
+    .tab-btn:hover:not(.active) { color: #334155; }
 
     .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
     .tab-content.active { display: block; }
 
-    /* ── Cards ────────────────────────────────────────────── */
+    /* ── Explore tab : carte pleine largeur, hauteur fixe ─── */
+    #explore-map { width: 100%; height: 50dvh; }
+
+    /* ── Cards ─────────────────────────────────────────────── */
     .card {
-      background: white; border-radius: 10px; padding: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.07); margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow:
+        0 2px 16px rgba(99, 102, 241, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        inset 0 1px 0 rgba(255,255,255,1);
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
     }
-    .card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: #2c3e50; }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 6%; right: 6%; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,1), transparent);
+      pointer-events: none;
+    }
+    .card h4 {
+      font-size: 0.86rem; font-weight: 600; margin-bottom: 12px;
+      color: #1e293b; letter-spacing: 0.01em;
+    }
 
-    /* ── Dashboard tab grid ───────────────────────────────── */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-    }
-    @media (max-width: 800px) {
-      .dashboard-grid { grid-template-columns: 1fr; }
+    /* ── Dashboard tab grid ────────────────────────────────── */
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 800px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+    /* ── Sensor diagram ────────────────────────────────────── */
+    .sensor-view { display: flex; flex-direction: column; align-items: center; }
+    /* Transition sur les cercles SVG : grossissement spring au blocage */
+    #sens-left, #sens-front, #sens-right, #sens-back {
+      transition: r 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.3s ease;
     }
 
-    /* ── Sensor diagram ───────────────────────────────────── */
-    .sensor-view { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .sensor-indicators {
-      display: grid; grid-template-columns: repeat(4, 1fr);
-      gap: 6px; text-align: center; width: 100%;
-    }
-    .sensor-dot { width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 3px; }
-    .sensor-dot.clear   { background: #27ae60; }
-    .sensor-dot.blocked { background: #e74c3c; }
-    .sensor-name { font-size: 0.72rem; color: #666; }
-
-    /* ── Metrics ──────────────────────────────────────────── */
+    /* ── Metrics ───────────────────────────────────────────── */
     .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     .metric {
-      background: #f8f9fa; border-radius: 8px; padding: 10px; text-align: center;
+      background: rgba(241, 245, 249, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 12px; padding: 10px 8px; text-align: center;
+      position: relative; overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 1px 4px rgba(0,0,0,0.04);
     }
-    .metric .label { font-size: 0.72rem; color: #888; margin-bottom: 3px; }
-    .metric .value { font-size: 1.3rem; font-weight: 700; }
+    .metric .label {
+      font-size: 0.65rem; color: #94a3b8; margin-bottom: 4px;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .metric .value { font-size: 1.25rem; font-weight: 700; color: #0f172a; }
 
     /* Battery bar */
-    .batt-bar-wrap { background: #ecf0f1; border-radius: 6px; height: 8px; overflow: hidden; margin-top: 4px; }
+    .batt-bar-wrap { background: rgba(99, 102, 241, 0.1); border-radius: 6px; height: 7px; overflow: hidden; margin-top: 5px; }
     .batt-bar { height: 100%; border-radius: 6px; transition: width 0.6s ease, background 0.6s ease; }
 
-    /* ── Alert banner ─────────────────────────────────────── */
+    /* ── Alert banner ──────────────────────────────────────── */
     .alert {
-      padding: 8px 12px; border-radius: 6px; font-size: 0.83rem; margin-bottom: 12px;
+      padding: 9px 14px; border-radius: 10px; font-size: 0.82rem; margin-bottom: 12px;
+      border: 1px solid; backdrop-filter: blur(12px);
     }
-    .alert.info    { background: #d6eaf8; color: #1a5276; }
-    .alert.success { background: #d5f5e3; color: #1e8449; }
+    .alert.info    { background: rgba(219, 234, 254, 0.7); color: #1d4ed8; border-color: rgba(37, 99, 235, 0.2); }
+    .alert.success { background: rgba(209, 250, 229, 0.7); color: #065f46; border-color: rgba(52, 211, 153, 0.25); }
 
-    /* ── Stats row ────────────────────────────────────────── */
+    /* ── Stats row ─────────────────────────────────────────── */
     .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
 
-    /* ── Log table ────────────────────────────────────────── */
-    .log-table { width: 100%; font-size: 0.78rem; border-collapse: collapse; }
+    /* ── Log table ─────────────────────────────────────────── */
+    .log-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; }
     .log-table th {
-      text-align: left; padding: 5px 7px; background: #f8f9fa;
-      color: #888; font-weight: 600; border-bottom: 1px solid #eee;
+      text-align: left; padding: 6px 8px;
+      background: rgba(241, 245, 249, 0.6);
+      color: #94a3b8; font-weight: 600;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.1);
+      text-transform: uppercase; font-size: 0.63rem; letter-spacing: 0.08em;
     }
-    .log-table td { padding: 4px 7px; border-bottom: 1px solid #f0f0f0; }
+    .log-table td { padding: 5px 8px; border-bottom: 1px solid rgba(99, 102, 241, 0.06); color: #334155; }
     .log-table tr:last-child td { border-bottom: none; }
+    .log-table tbody tr:hover td { background: rgba(99, 102, 241, 0.03); }
 
-    .helper-text { font-size: 0.8rem; color: #888; font-style: italic; }
+    .helper-text { font-size: 0.8rem; color: #94a3b8; font-style: italic; }
 
-    /* ── MQTT info ────────────────────────────────────────── */
-    details summary { font-size: 0.78rem; color: #888; cursor: pointer; }
-    .mqtt-info-code { font-size: 0.72rem; margin-top: 6px; color: #555; font-family: monospace; white-space: pre-line; line-height: 1.6; }
+    /* ── Sidebar footer MQTT ───────────────────────────────── */
+    .sidebar-spacer { flex: 1; min-height: 10px; }
+    .sidebar-footer {
+      border-top: 1px solid rgba(99, 102, 241, 0.1);
+      padding-top: 12px;
+    }
+    .mqtt-info-code {
+      font-size: 0.68rem; color: #94a3b8;
+      font-family: 'SF Mono', 'Fira Mono', monospace;
+      line-height: 1.8;
+    }
+    .mqtt-info-row { display: flex; flex-direction: column; gap: 2px; }
+    .mqtt-info-row span { color: #64748b; }
   </style>
 </head>
 <body>
@@ -202,10 +315,15 @@
 <!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
 <header class="header">
   <div class="header-title">🤖 Eliobot</div>
-  <div class="header-mode" id="header-mode">Mode : <strong>Veille</strong></div>
-  <span class="status-badge disconnected" id="status-badge">● Déconnecté</span>
+  <div class="header-mode" id="header-mode">Mode : <strong>Manuel</strong></div>
+  <span class="status-badge disconnected" id="status-badge">Déconnecté</span>
   <span class="last-signal" id="last-signal">Aucun signal</span>
-  <div class="battery-display" id="battery-display">🔋 —</div>
+  <div class="battery-display" id="battery-display">
+    <svg id="batt-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 13v-2"/>
+    </svg>
+    <span id="batt-label">—</span>
+  </div>
 </header>
 
 <!-- ══ LAYOUT ══════════════════════════════════════════════════════════════ -->
@@ -214,24 +332,24 @@
   <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
   <aside class="sidebar">
 
-    <!-- Mode -->
+    <!-- Mode — activation directe au changement -->
     <div class="sidebar-section">
-      <div class="sidebar-label">⚙️ Mode</div>
-      <select id="mode-select">
-        <option value="idle">⏸ Veille</option>
-        <option value="manual">🕹️ Manuel</option>
-        <option value="exploration">🗺️ Exploration</option>
+      <div class="sidebar-label">Mode</div>
+      <select id="mode-select" onchange="applyMode()">
+        <option value="manual">Manuel</option>
+        <option value="exploration">Exploration</option>
       </select>
-      <button class="btn btn-primary" onclick="applyMode()">✅ Appliquer</button>
     </div>
 
     <div class="divider"></div>
 
     <!-- Vitesse -->
     <div class="sidebar-section">
-      <div class="sidebar-label">🚀 Vitesse</div>
+      <div class="sidebar-label">Vitesse</div>
       <div class="speed-row">
-        <span>20</span><span id="speed-value" style="color:#7d3c98;font-weight:700;">70</span><span>100</span>
+        <span>20</span>
+        <span id="speed-value" style="color:#2563eb;font-weight:700;">70</span>
+        <span>100</span>
       </div>
       <input type="range" id="speed-slider" min="20" max="100" step="5" value="70"
              oninput="onSpeedChange(this.value)" disabled>
@@ -241,19 +359,27 @@
 
     <!-- D-Pad -->
     <div class="sidebar-section">
-      <div class="sidebar-label">🕹️ D-Pad</div>
+      <div class="sidebar-label">Contrôle</div>
       <div class="held-indicator" id="held-indicator">—</div>
       <div class="dpad">
         <div class="dpad-empty"></div>
-        <button class="dpad-btn" id="btn-forward" disabled>⬆️</button>
+        <button class="dpad-btn" id="btn-forward" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
         <div class="dpad-empty"></div>
 
-        <button class="dpad-btn" id="btn-left" disabled>⬅️</button>
-        <button class="dpad-btn stop" id="btn-stop" disabled>⏹</button>
-        <button class="dpad-btn" id="btn-right" disabled>➡️</button>
+        <button class="dpad-btn" id="btn-left" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="dpad-empty"></div>
+        <button class="dpad-btn" id="btn-right" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
 
         <div class="dpad-empty"></div>
-        <button class="dpad-btn" id="btn-backward" disabled>⬇️</button>
+        <button class="dpad-btn" id="btn-backward" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
         <div class="dpad-empty"></div>
       </div>
     </div>
@@ -262,17 +388,24 @@
 
     <!-- Actions utilitaires -->
     <div class="sidebar-section">
-      <button class="btn btn-secondary" onclick="resetMap()">🔄 Réinitialiser carte</button>
+      <button class="btn btn-secondary" onclick="resetMap()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+        Réinitialiser la carte
+      </button>
     </div>
 
-    <div class="divider"></div>
+    <div class="sidebar-spacer"></div>
 
-    <!-- Info MQTT -->
-    <div class="sidebar-section">
-      <details>
-        <summary>ℹ️ Connexion MQTT</summary>
-        <div class="mqtt-info-code" id="mqtt-info-text">Chargement…</div>
-      </details>
+    <!-- Info MQTT — fixé en bas -->
+    <div class="sidebar-footer">
+      <div class="sidebar-label">Connexion</div>
+      <div class="mqtt-info-row">
+        <div class="mqtt-info-code">Broker : <span id="mqtt-broker">—</span></div>
+        <div class="mqtt-info-code">WS : <span id="mqtt-ws">—</span></div>
+      </div>
     </div>
 
   </aside>
@@ -282,8 +415,8 @@
 
     <!-- Tabs -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('board', this)">📊 Tableau de bord</button>
-      <button class="tab-btn" onclick="switchTab('explore', this)">🗺️ Exploration</button>
+      <button class="tab-btn active" onclick="switchTab('board', this)">Tableau de bord</button>
+      <button class="tab-btn" onclick="switchTab('explore', this)">Exploration</button>
     </div>
 
     <!-- ── Tab 1 : Tableau de bord ───────────────────────────────────────── -->
@@ -295,46 +428,26 @@
           <h4>Capteurs d'obstacles</h4>
           <div class="sensor-view">
             <svg width="160" height="190" viewBox="-90 -100 180 200">
-              <!-- Corps robot -->
-              <rect x="-38" y="-62" width="76" height="124" rx="9" ry="9"
-                    fill="#7d3c98" stroke="#4a235a" stroke-width="2"/>
-              <text x="0" y="18" text-anchor="middle" font-size="24" fill="white">▲</text>
+              <!-- Image robot PNG -->
+              <image href="/static/eliobot.png" x="-150" y="-100" width="300" height="200"/>
 
               <!-- Capteur Avant G. -->
-              <circle id="sens-left"  cx="-56" cy="-48" r="14" fill="#27ae60"/>
+              <circle id="sens-left"  cx="-56" cy="-48" r="14" fill="#34d399"/>
               <text   x="-56" y="-48" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Av.G</text>
 
               <!-- Capteur Avant -->
-              <circle id="sens-front" cx="0"   cy="-82" r="14" fill="#27ae60"/>
+              <circle id="sens-front" cx="0"   cy="-82" r="14" fill="#34d399"/>
               <text   x="0"   y="-82" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Avant</text>
 
               <!-- Capteur Avant D. -->
-              <circle id="sens-right" cx="56"  cy="-48" r="14" fill="#27ae60"/>
+              <circle id="sens-right" cx="56"  cy="-48" r="14" fill="#34d399"/>
               <text   x="56"  y="-48" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Av.D</text>
 
               <!-- Capteur Arrière -->
-              <circle id="sens-back"  cx="0"   cy="80"  r="14" fill="#27ae60"/>
-              <text   x="0"    y="80"  text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Arr.</text>
+              <circle id="sens-back"  cx="0"   cy="80"  r="14" fill="#34d399"/>
+              <text   x="0"   y="80"  text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Arr.</text>
             </svg>
 
-            <div class="sensor-indicators">
-              <div>
-                <div class="sensor-dot clear" id="dot-left"></div>
-                <div class="sensor-name">Av. G.</div>
-              </div>
-              <div>
-                <div class="sensor-dot clear" id="dot-front"></div>
-                <div class="sensor-name">Avant</div>
-              </div>
-              <div>
-                <div class="sensor-dot clear" id="dot-right"></div>
-                <div class="sensor-name">Av. D.</div>
-              </div>
-              <div>
-                <div class="sensor-dot clear" id="dot-back"></div>
-                <div class="sensor-name">Arrière</div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -344,11 +457,11 @@
 
           <!-- Batterie -->
           <div style="margin-bottom:14px;">
-            <div style="font-size:0.83rem;margin-bottom:4px;">
-              <strong>Batterie</strong> : <span id="batt-text">—</span>
+            <div style="font-size:0.82rem;margin-bottom:5px;color:#334155;">
+              <strong style="color:#1e293b;">Batterie</strong> : <span id="batt-text">—</span>
             </div>
             <div class="batt-bar-wrap">
-              <div class="batt-bar" id="batt-bar" style="width:0%;background:#27ae60;"></div>
+              <div class="batt-bar" id="batt-bar" style="width:0%;background:#34d399;"></div>
             </div>
           </div>
 
@@ -357,11 +470,11 @@
           <div class="metrics-grid">
             <div class="metric">
               <div class="label">Mode</div>
-              <div class="value" id="metric-mode" style="font-size:0.9rem;">⏸ Veille</div>
+              <div class="value" id="metric-mode" style="font-size:0.88rem;">Manuel</div>
             </div>
             <div class="metric">
               <div class="label">Connexion</div>
-              <div class="value" id="metric-conn">❌</div>
+              <div class="value" id="metric-conn">—</div>
             </div>
           </div>
 
@@ -408,7 +521,7 @@
 
       <div class="card">
         <h4>Carte d'exploration</h4>
-        <div id="explore-map" style="height:380px;"></div>
+        <div id="explore-map"></div>
       </div>
 
       <div class="stats-row" id="explore-stats" style="display:none;">
@@ -445,14 +558,12 @@ const HEADING_LABEL = {0:'Nord', 1:'Est', 2:'Sud', 3:'Ouest'};
 const HEADING_DX    = {0:0, 1:1, 2:0, 3:-1};
 const HEADING_DY    = {0:1, 1:0, 2:-1, 3:0};
 
-const MODE_LABELS = {
-  idle: '⏸ Veille', manual: '🕹️ Manuel', exploration: '🗺️ Exploration',
-};
+const MODE_LABELS = { idle: 'Veille', manual: 'Manuel', exploration: 'Exploration' }; // idle conservé pour la télémétrie
 
 const ACTION_LABELS = {
-  start: '🚀 Départ', moved_forward: '⬆️ Avancé',
-  turned_right: '↩️ Tourné droite', turned_left: '↪️ Tourné gauche',
-  uturn: '🔄 Demi-tour', check: '🔍 Vérification',
+  start: 'Départ', moved_forward: 'Avancé',
+  turned_right: 'Tourné droite', turned_left: 'Tourné gauche',
+  uturn: 'Demi-tour', check: 'Vérification',
 };
 
 const SENS_IDS = {
@@ -473,7 +584,6 @@ let state = {
 let heldDir      = null;
 let holdInterval = null;
 let currentSpeed = 70;
-let mapReady     = false;
 
 // ════════════════════════════════════════════════════════════════
 // WEBSOCKET
@@ -488,7 +598,7 @@ function connectWS() {
   };
   ws.onclose = () => {
     document.getElementById('status-badge').className = 'status-badge disconnected';
-    document.getElementById('status-badge').textContent = '● Déconnecté';
+    document.getElementById('status-badge').textContent = 'Déconnecté';
     setTimeout(connectWS, 2000);
   };
   ws.onerror = () => ws.close();
@@ -505,25 +615,22 @@ function updateUI() {
 }
 
 function updateHeader() {
-  const badge      = document.getElementById('status-badge');
-  const lastSigEl  = document.getElementById('last-signal');
+  const badge     = document.getElementById('status-badge');
+  const lastSigEl = document.getElementById('last-signal');
 
-  // Calcul de l'âge du dernier signal
   let ageMs = null;
-  if (state.last_seen) {
-    ageMs = Date.now() - new Date(state.last_seen).getTime();
-  }
+  if (state.last_seen) ageMs = Date.now() - new Date(state.last_seen).getTime();
   const robotActive = state.connected && ageMs !== null && ageMs < 10000;
 
   if (!state.connected) {
     badge.className   = 'status-badge disconnected';
-    badge.textContent = '● Broker déconnecté';
+    badge.textContent = 'Broker déconnecté';
   } else if (!robotActive) {
     badge.className   = 'status-badge warning';
-    badge.textContent = '● Robot absent';
+    badge.textContent = 'Robot absent';
   } else {
     badge.className   = 'status-badge connected';
-    badge.textContent = '● Robot actif';
+    badge.textContent = 'Robot actif';
   }
 
   if (ageMs !== null) {
@@ -539,15 +646,18 @@ function updateHeader() {
     'Mode : <strong>' + (MODE_LABELS[state.mode] || state.mode) + '</strong>';
 
   const bv = state.battery_v;
-  const battEl = document.getElementById('battery-display');
+  const battLabel = document.getElementById('batt-label');
+  const battIcon  = document.getElementById('batt-icon');
   if (bv !== null && bv !== undefined) {
     const pct = battPct(bv);
-    battEl.textContent = (pct < 20 ? '🪫' : '🔋') + ' ' + bv.toFixed(2) + 'V  ' + pct + '%';
+    battLabel.textContent = pct + '% · ' + bv.toFixed(2) + ' V';
+    const iconColor = pct < 15 ? '#f87171' : pct < 50 ? '#fb923c' : '#34d399';
+    battIcon.setAttribute('stroke', iconColor);
   } else {
-    battEl.textContent = '🔋 —';
+    battLabel.textContent = '—';
+    battIcon.setAttribute('stroke', '#94a3b8');
   }
 
-  // Activer/désactiver les contrôles manuels
   const manual = state.mode === 'manual';
   document.getElementById('speed-slider').disabled = !manual;
   document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = !manual);
@@ -555,13 +665,14 @@ function updateHeader() {
 
 function updateSensors() {
   const obs = state.obstacles || {};
-  const BLOCKED = '#e74c3c', CLEAR = '#27ae60';
-  for (const [key, [svgId, dotId]] of Object.entries(SENS_IDS)) {
+  const BLOCKED = '#f87171', CLEAR = '#34d399';
+  for (const [key, [svgId]] of Object.entries(SENS_IDS)) {
     const blocked = obs[key] === true;
     const circle = document.getElementById(svgId);
-    if (circle) circle.setAttribute('fill', blocked ? BLOCKED : CLEAR);
-    const dot = document.getElementById(dotId);
-    if (dot) dot.className = 'sensor-dot ' + (blocked ? 'blocked' : 'clear');
+    if (circle) {
+      circle.setAttribute('fill', blocked ? BLOCKED : CLEAR);
+      circle.setAttribute('r', blocked ? 21 : 14);
+    }
   }
 }
 
@@ -573,17 +684,17 @@ function updateStatePanel() {
   const bv = state.battery_v;
   if (bv !== null && bv !== undefined) {
     const pct = battPct(bv);
-    document.getElementById('batt-text').textContent = bv.toFixed(2) + ' V — ' + pct + '%';
+    document.getElementById('batt-text').textContent = pct + '% — ' + bv.toFixed(2) + ' V';
     const bar = document.getElementById('batt-bar');
     bar.style.width = pct + '%';
-    bar.style.background = pct < 20 ? '#e74c3c' : pct < 40 ? '#e67e22' : '#27ae60';
+    bar.style.background = pct < 20 ? '#f87171' : pct < 40 ? '#fb923c' : '#34d399';
   } else {
     document.getElementById('batt-text').textContent = '—';
     document.getElementById('batt-bar').style.width = '0%';
   }
 
   document.getElementById('metric-mode').textContent = MODE_LABELS[state.mode] || state.mode;
-  document.getElementById('metric-conn').textContent = state.connected ? '✅' : '❌';
+  document.getElementById('metric-conn').textContent = state.connected ? 'En ligne' : 'Hors ligne';
 
   const steps = state.steps || [];
   const hasCur = steps.length > 0;
@@ -603,20 +714,17 @@ function updateExploration() {
   const steps = state.steps || [];
   const mode  = state.mode;
 
-  // Alert
   const alertEl = document.getElementById('explore-alert');
   if (mode === 'exploration') {
     alertEl.className = 'alert success';
-    alertEl.innerHTML = '🗺️ Mode Exploration actif — le robot navigue en autonomie';
+    alertEl.innerHTML = 'Mode Exploration actif — le robot navigue en autonomie.';
   } else {
     alertEl.className = 'alert info';
     alertEl.innerHTML = 'Passe en mode <strong>Exploration</strong> depuis la sidebar pour démarrer.';
   }
 
-  // Carte Plotly
   updateMap(steps);
 
-  // Stats & journal
   const has = steps.length > 0;
   document.getElementById('explore-stats').style.display = has ? '' : 'none';
   document.getElementById('log-card').style.display      = has ? '' : 'none';
@@ -629,10 +737,9 @@ function updateExploration() {
     document.getElementById('stat-steps').textContent = steps.length;
     document.getElementById('stat-obs').textContent   = obsCount;
     document.getElementById('stat-dist').textContent  = dist + ' pas';
-    document.getElementById('log-title').textContent  = 'Journal (' + steps.length + ' étapes)';
+    document.getElementById('log-title').textContent  = 'Journal — 10 dernières étapes (total : ' + steps.length + ')';
 
-    // Journal — 30 derniers, ordre inversé
-    const last30 = steps.slice(-30).reverse();
+    const last30 = steps.slice(-10).reverse();
     document.getElementById('log-body').innerHTML = last30.map(s => {
       const h = s.heading ?? 0;
       return `<tr>
@@ -652,18 +759,25 @@ function updateExploration() {
 // PLOTLY MAP
 // ════════════════════════════════════════════════════════════════
 const MAP_LAYOUT = {
-  xaxis: {showgrid:true, gridcolor:'#ecf0f1', zeroline:true,
-          zerolinewidth:2, zerolinecolor:'#bdc3c7', title:'X (pas)'},
-  yaxis: {showgrid:true, gridcolor:'#ecf0f1', zeroline:true,
-          zerolinewidth:2, zerolinecolor:'#bdc3c7', scaleanchor:'x', title:'Y (pas)'},
-  legend: {orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1},
+  xaxis: {
+    showgrid:true, gridcolor:'rgba(99,102,241,0.1)', zeroline:true,
+    zerolinewidth:2, zerolinecolor:'rgba(99,102,241,0.2)',
+    title:{text:'X (pas)', font:{color:'#94a3b8'}}, tickfont:{color:'#94a3b8'},
+  },
+  yaxis: {
+    showgrid:true, gridcolor:'rgba(99,102,241,0.1)', zeroline:true,
+    zerolinewidth:2, zerolinecolor:'rgba(99,102,241,0.2)',
+    scaleanchor:'x',
+    title:{text:'Y (pas)', font:{color:'#94a3b8'}}, tickfont:{color:'#94a3b8'},
+  },
+  legend: { orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1, font:{color:'#64748b'}, bgcolor:'rgba(0,0,0,0)' },
   margin: {l:50, r:10, t:30, b:40},
-  plot_bgcolor:'white',
+  plot_bgcolor:'rgba(255,255,255,0.5)',
   paper_bgcolor:'rgba(0,0,0,0)',
 };
 
 function updateMap(steps) {
-  const el = document.getElementById('explore-map');
+  const el  = document.getElementById('explore-map');
   const cur = steps.length > 0 ? steps[steps.length - 1] : null;
   const traces = [];
 
@@ -671,8 +785,8 @@ function updateMap(steps) {
     traces.push({
       x: steps.map(s => s.x), y: steps.map(s => s.y),
       mode: 'lines+markers',
-      line: {color:'#3498db', width:2},
-      marker: {size:5, color:'#3498db'},
+      line: {color:'#3b82f6', width:2},
+      marker: {size:5, color:'#3b82f6'},
       name: 'Chemin',
     });
 
@@ -687,7 +801,7 @@ function updateMap(steps) {
     if (obsX.length > 0) {
       traces.push({
         x: obsX, y: obsY, mode: 'markers',
-        marker: {size:14, color:'#e74c3c', symbol:'x-thin-open', line:{width:3, color:'#e74c3c'}},
+        marker: {size:14, color:'#f87171', symbol:'x-thin-open', line:{width:3, color:'#f87171'}},
         name: 'Obstacles',
       });
     }
@@ -697,7 +811,7 @@ function updateMap(steps) {
     const h = cur.heading ?? 0;
     traces.push({
       x: [cur.x], y: [cur.y], mode: 'markers+text',
-      marker: {size:18, color:'#8e44ad', symbol:'circle', line:{color:'white', width:2}},
+      marker: {size:18, color:'#2563eb', symbol:'circle', line:{color:'white', width:2}},
       text: [HEADING_ARROW[h]], textposition: 'middle center',
       textfont: {size:14, color:'white'},
       name: 'Eliobot',
@@ -705,7 +819,7 @@ function updateMap(steps) {
   } else {
     traces.push({
       x: [0], y: [0], mode: 'markers',
-      marker: {size:14, color:'#8e44ad', symbol:'circle'},
+      marker: {size:14, color:'#2563eb', symbol:'circle'},
       name: 'Eliobot (départ)',
     });
   }
@@ -714,11 +828,11 @@ function updateMap(steps) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// D-PAD — Dead-man's switch côté client (envoie toutes les 500ms)
+// D-PAD
 // ════════════════════════════════════════════════════════════════
 function dpadStart(dir) {
   if (state.mode !== 'manual') return;
-  if (heldDir === dir) return; // déjà actif
+  if (heldDir === dir) return;
   dpadClear();
   heldDir = dir;
   document.getElementById('held-indicator').textContent = '▶ ' + dir;
@@ -726,10 +840,7 @@ function dpadStart(dir) {
   holdInterval = setInterval(() => { if (heldDir) sendMove(heldDir); }, 500);
 }
 
-function dpadStop() {
-  dpadClear();
-  sendMove('stop');
-}
+function dpadStop() { dpadClear(); sendMove('stop'); }
 
 function dpadClear() {
   if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
@@ -746,6 +857,9 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'explore') {
+    requestAnimationFrame(() => Plotly.Plots.resize('explore-map'));
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -753,11 +867,7 @@ function switchTab(name, btn) {
 // ════════════════════════════════════════════════════════════════
 async function post(url, body = {}) {
   try {
-    await fetch(url, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(body),
-    });
+    await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
   } catch(e) { console.error('POST', url, e); }
 }
 
@@ -765,6 +875,10 @@ function applyMode() {
   const mode = document.getElementById('mode-select').value;
   post('/command/mode', {mode});
   if (mode !== 'manual') dpadClear();
+  // Mise à jour optimiste : ne pas attendre la confirmation WebSocket
+  const manual = mode === 'manual';
+  document.getElementById('speed-slider').disabled = !manual;
+  document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = !manual);
 }
 
 let speedTimer = null;
@@ -776,28 +890,22 @@ function onSpeedChange(val) {
 }
 
 function sendMove(dir) { post('/command/move', {direction: dir}); }
-
-function resetMap() { post('/command/reset_map'); }
+function resetMap() {
+  post('/command/reset_map');
+  requestAnimationFrame(() => Plotly.Plots.resize('explore-map'));
+}
 
 // ════════════════════════════════════════════════════════════════
-// INIT D-PAD LISTENERS (pointer events pour souris + tactile)
+// INIT D-PAD LISTENERS
 // ════════════════════════════════════════════════════════════════
 function setupDpad() {
-  const DIRS = {
-    'btn-forward':  'forward',
-    'btn-backward': 'backward',
-    'btn-left':     'right',   // gauche/droite inversés par rapport au référentiel robot
-    'btn-right':    'left',
-  };
-
+  const DIRS = { 'btn-forward':'forward', 'btn-backward':'backward', 'btn-left':'right', 'btn-right':'left' };
   for (const [id, dir] of Object.entries(DIRS)) {
     const btn = document.getElementById(id);
     btn.addEventListener('pointerdown',  (e) => { e.preventDefault(); btn.setPointerCapture(e.pointerId); dpadStart(dir); });
     btn.addEventListener('pointerup',   (e) => { e.preventDefault(); dpadStop(); });
     btn.addEventListener('pointerleave',(e) => { if (heldDir === dir) dpadStop(); });
   }
-
-  document.getElementById('btn-stop').addEventListener('click', () => dpadStop());
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -805,16 +913,18 @@ function setupDpad() {
 // ════════════════════════════════════════════════════════════════
 setupDpad();
 
-// Carte vide initiale
 Plotly.newPlot('explore-map', [{
   x:[0], y:[0], mode:'markers',
-  marker:{size:14, color:'#8e44ad', symbol:'circle'},
+  marker:{size:14, color:'#2563eb', symbol:'circle'},
   name:'Eliobot (départ)',
 }], MAP_LAYOUT, {responsive:true, displayModeBar:false});
 
-// Info MQTT
-document.getElementById('mqtt-info-text').textContent =
-  'Broker : ' + location.hostname + '\nWebSocket : ' + location.host + '/ws';
+document.getElementById('mqtt-broker').textContent = location.hostname;
+document.getElementById('mqtt-ws').textContent     = location.host + '/ws';
+
+// Sync immédiat du mode au chargement — le robot démarre en "idle",
+// on lui envoie tout de suite le mode affiché dans le dropdown.
+applyMode();
 
 connectWS();
 </script>

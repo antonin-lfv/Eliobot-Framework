@@ -63,7 +63,7 @@ apt-get install -y docker-buildx-plugin
 Puis copier les fichiers depuis le Mac :
 ```bash
 # Sur le Mac — la barre oblique finale sur la source est importante (copie le contenu, pas le dossier)
-rsync -av /chemin/vers/Projets-eliobot/server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
+rsync -av /Users/antoninlefevre/Downloads/Projets/Projets-eliobot/server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
 ```
 
 ---

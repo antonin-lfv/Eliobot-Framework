@@ -13,3 +13,6 @@ wheels/
 # environment variables
 .env
 robot/settings.toml
+
+# Claude context
+CLAUDE.md

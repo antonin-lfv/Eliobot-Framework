@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  Eliobot Framework v1.2
+  Eliobot Framework v1.3
   <br>
 </h1>
 
@@ -16,6 +16,8 @@
   <a href="#-architecture">Architecture</a> •
   <a href="#-utilisation-rapide">Utilisation</a> •
   <a href="#%EF%B8%8F-configuration">Configuration</a> •
+  <a href="#-programmes-disponibles">Programmes</a> •
+  <a href="#-dashboard-mqtt--fastapi">Dashboard</a> •
   <a href="#-créer-un-programme">Créer un programme</a> •
   <a href="#-api">API</a>
 </p>
@@ -50,16 +52,18 @@ Projets-eliobot/
 │   │   ├── safe_mode.py   # Programme de secours
 │   │   ├── web_server.py  # Serveur web HTTP
 │   │   ├── mqtt_client.py # Client MQTT
+│   │   ├── mqtt_dashboard.py # Client MQTT avancé (dashboard)
 │   │   ├── obstacles.py   # Evitement d'obstacles
-│   │   └── animations_fire.py # Animations LED
+│   │   ├── animations_fire.py # Animations LED
+│   │   ├── dance.py       # Chorégraphie moteurs + LEDs + buzzer
+│   │   ├── ir_control.py  # Contrôle télécommande infrarouge
+│   │   └── line_follower.py   # Suivi de ligne
 │   ├── lib/               # Bibliotheques (elio.py + Adafruit)
 │   ├── www/               # Interface web
 │   └── sd/                # Fichiers SD
 └── server/
     └── control-dashboard/ # Dashboard FastAPI + broker MQTT (Raspberry Pi)
 ```
-
-> Voir [server/control-dashboard/README.md](server/control-dashboard/README.md) pour l'installation et l'utilisation du dashboard.
 
 <br>
 
@@ -121,6 +125,113 @@ PORT = 1883
 ```
 
 Utilise pour la calibration du capteur de ligne.
+
+<br>
+
+# Programmes disponibles
+
+| Programme | Description |
+|---|---|
+| `web_server` | Serveur HTTP embarqué — contrôle moteurs, buzzer et LEDs depuis un navigateur |
+| `mqtt_client` | Client MQTT simple — publie la télémétrie (obstacles, batterie) et reçoit des commandes |
+| `mqtt_dashboard` | Client MQTT avancé — télémétrie complète + contrôle manuel + mode exploration autonome (compatible dashboard) |
+| `obstacles` | Évitement d'obstacles autonome (règle de la main droite) |
+| `line_follower` | Suivi de ligne avec capteur IR et retour visuel sur la matrice LED |
+| `ir_control` | Contrôle par télécommande infrarouge avec émotions visuelles et sonores |
+| `dance` | Chorégraphie synchronisée moteurs + buzzer + matrice LED (~25 secondes) |
+| `animations_fire` | Animations matricielles en boucle (feu, patterns...) |
+| `safe_mode` | Mode de secours automatique — activé si le programme sélectionné crashe |
+
+<br>
+
+# Dashboard MQTT + FastAPI
+
+<p align="center">
+  <img src="server/control-dashboard/image_dashboard.png" alt="Dashboard preview">
+</p>
+
+Dashboard temps réel pour monitorer et contrôler le robot depuis un Raspberry Pi (ou tout Linux avec Docker). Il combine un broker MQTT Eclipse Mosquitto et un backend FastAPI exposant une interface web via WebSocket.
+
+> Voir [server/control-dashboard/README.md](server/control-dashboard/README.md) pour l'installation complète.
+
+## Architecture du dashboard
+
+```
+control-dashboard/
+├── docker-compose.yml          # Orchestration des services
+├── setup.sh                    # Script d'installation (Raspberry Pi)
+├── mosquitto/
+│   └── mosquitto.conf          # Configuration du broker MQTT
+└── fastapi-dashboard/          # Dashboard FastAPI + WebSocket
+    ├── app.py                  # Backend FastAPI (MQTT + WebSocket + REST)
+    ├── static/
+    │   └── index.html          # Frontend SPA (HTML + JS + Plotly CDN)
+    ├── pyproject.toml
+    └── Dockerfile
+```
+
+**Services Docker :**
+- `mosquitto` — Broker MQTT Eclipse Mosquitto 2.x (port `1883`)
+- `dashboard` — Dashboard FastAPI (port `8000`)
+
+## Mise en route rapide
+
+**1. Déployer sur le Raspberry Pi :**
+
+```bash
+rsync -av server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
+```
+
+**2. Démarrer les services :**
+
+```bash
+cd ~/eliobot-server/control-dashboard
+chmod +x setup.sh && ./setup.sh
+```
+
+**3. Configurer le robot (`robot/settings.toml`) :**
+
+```toml
+PROGRAM   = "mqtt_dashboard"
+BROKER_IP = "<IP_DU_PI>"
+PORT      = 1883
+```
+
+**4. Déployer le programme MQTT sur le robot :**
+
+```bash
+./deploy.sh -p mqtt_dashboard
+```
+
+Le dashboard est accessible sur `http://<IP_DU_PI>:8000`.
+
+## Fonctionnalités
+
+| Section | Description |
+|---|---|
+| **Header** | Statut connexion (🟢/🟡/🔴), dernier signal reçu, niveau batterie |
+| **Sidebar** | Sélecteur de mode, slider vitesse, D-Pad de contrôle |
+| **Capteurs** | Vue SVG des obstacles (avant gauche/droit, arrière), état du robot |
+| **Exploration** | Carte Plotly du chemin parcouru, obstacles détectés, journal des déplacements |
+
+**Modes de fonctionnement :**
+
+- **Idle** — robot en veille, moteurs coupés
+- **Manuel** — D-Pad maintenu avec dead-man's switch (arrêt automatique si pas de commande reçue dans les 800ms)
+- **Exploration** — navigation autonome par la règle de la main droite, carte affichée en temps réel
+
+## Topics MQTT
+
+| Topic | Direction | Payload |
+|---|---|---|
+| `elio/telemetry/battery` | Robot → Serveur | `float` — tension en volts |
+| `elio/telemetry/obstacles` | Robot → Serveur | JSON `{front, left, right, back}` |
+| `elio/telemetry/mode` | Robot → Serveur | `idle` \| `manual` \| `exploration` |
+| `elio/telemetry/step` | Robot → Serveur | JSON — étape d'exploration (x, y, heading, action) |
+| `elio/command/mode` | Serveur → Robot | `idle` \| `manual` \| `exploration` |
+| `elio/command/move` | Serveur → Robot | `forward` \| `backward` \| `left` \| `right` \| `stop` |
+| `elio/command/speed` | Serveur → Robot | `int` 0–100 |
+| `elio/command/reset_map` | Serveur → Robot | `1` |
 
 <br>
 
