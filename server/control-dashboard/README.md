@@ -2,7 +2,7 @@
 
 Dashboard FastAPI + broker MQTT pour monitorer et contrôler le robot en temps réel depuis un Raspberry Pi.
 
-![dashboard](<Capture d’écran 2026-02-25 à 14.38.48.png>)
+![dashboard](Capture d’écran 2026-02-25 à 14.38.48.png)
 
 ## Architecture
 
