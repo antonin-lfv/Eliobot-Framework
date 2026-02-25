@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eliobot Dashboard</title>
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js" charset="utf-8"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      color: #2c3e50;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .header {
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .header-title { font-size: 1.25rem; font-weight: 700; color: #7d3c98; white-space: nowrap; }
+    .header-mode  { font-size: 0.82rem; color: #666; }
+    .status-badge {
+      padding: 3px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+      white-space: nowrap;
+    }
+    .status-badge.connected    { background: #d5f5e3; color: #1e8449; }
+    .status-badge.disconnected { background: #fadbd8; color: #c0392b; }
+    .status-badge.warning      { background: #fef3cd; color: #856404; }
+    .last-signal { font-size: 0.73rem; color: #999; white-space: nowrap; }
+    .battery-display { margin-left: auto; font-size: 0.88rem; white-space: nowrap; }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Sidebar ──────────────────────────────────────────── */
+    .sidebar {
+      width: 210px;
+      background: white;
+      border-right: 1px solid #e0e0e0;
+      padding: 14px 12px;
+      overflow-y: auto;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .sidebar-section { margin-bottom: 14px; }
+    .sidebar-label {
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+      color: #7d3c98; font-weight: 600; margin-bottom: 8px;
+    }
+
+    .sidebar select {
+      width: 100%; padding: 7px 8px; border-radius: 6px; border: 1px solid #ddd;
+      font-size: 0.83rem; background: white; cursor: pointer;
+    }
+    .btn {
+      display: block; width: 100%; padding: 7px 10px; border-radius: 6px; border: none;
+      font-size: 0.83rem; cursor: pointer; font-weight: 600; text-align: center;
+      transition: background 0.15s, opacity 0.15s;
+      margin-top: 6px;
+    }
+    .btn-primary   { background: #7d3c98; color: white; }
+    .btn-primary:hover { background: #6c3483; }
+    .btn-secondary { background: #ecf0f1; color: #2c3e50; }
+    .btn-secondary:hover { background: #dde1e3; }
+
+    /* Speed slider */
+    .speed-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.75rem; color: #888; margin-bottom: 4px;
+    }
+    input[type=range] { width: 100%; accent-color: #7d3c98; }
+
+    /* ── D-Pad ────────────────────────────────────────────── */
+    .dpad {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 4px;
+    }
+    .dpad-btn {
+      padding: 0; height: 38px; border-radius: 6px; border: none;
+      font-size: 1.1rem; cursor: pointer; background: #7d3c98; color: white;
+      transition: background 0.1s, transform 0.05s;
+      user-select: none; -webkit-user-select: none; touch-action: none;
+    }
+    .dpad-btn:hover:not(:disabled) { background: #6c3483; }
+    .dpad-btn:active:not(:disabled) { transform: scale(0.93); }
+    .dpad-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .dpad-btn.stop { background: #e74c3c; }
+    .dpad-btn.stop:hover:not(:disabled) { background: #c0392b; }
+    .dpad-empty { /* placeholder vide */ }
+
+    .held-indicator {
+      text-align: center; font-size: 0.78rem; color: #7d3c98;
+      font-weight: 600; min-height: 18px; margin: 4px 0;
+    }
+
+    .divider { height: 1px; background: #eee; margin: 10px 0; }
+
+    /* ── Main content ─────────────────────────────────────── */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+    /* ── Tabs ─────────────────────────────────────────────── */
+    .tabs {
+      display: flex; border-bottom: 2px solid #e0e0e0;
+      background: white; flex-shrink: 0;
+    }
+    .tab-btn {
+      padding: 10px 20px; border: none; background: none; font-size: 0.88rem;
+      font-weight: 500; cursor: pointer; color: #666;
+      border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: color 0.15s;
+    }
+    .tab-btn.active { color: #7d3c98; border-bottom-color: #7d3c98; }
+    .tab-btn:hover { color: #7d3c98; }
+
+    .tab-content { flex: 1; overflow-y: auto; padding: 16px; display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Cards ────────────────────────────────────────────── */
+    .card {
+      background: white; border-radius: 10px; padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07); margin-bottom: 14px;
+    }
+    .card h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 12px; color: #2c3e50; }
+
+    /* ── Dashboard tab grid ───────────────────────────────── */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 800px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Sensor diagram ───────────────────────────────────── */
+    .sensor-view { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .sensor-indicators {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 6px; text-align: center; width: 100%;
+    }
+    .sensor-dot { width: 12px; height: 12px; border-radius: 50%; margin: 0 auto 3px; }
+    .sensor-dot.clear   { background: #27ae60; }
+    .sensor-dot.blocked { background: #e74c3c; }
+    .sensor-name { font-size: 0.72rem; color: #666; }
+
+    /* ── Metrics ──────────────────────────────────────────── */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .metric {
+      background: #f8f9fa; border-radius: 8px; padding: 10px; text-align: center;
+    }
+    .metric .label { font-size: 0.72rem; color: #888; margin-bottom: 3px; }
+    .metric .value { font-size: 1.3rem; font-weight: 700; }
+
+    /* Battery bar */
+    .batt-bar-wrap { background: #ecf0f1; border-radius: 6px; height: 8px; overflow: hidden; margin-top: 4px; }
+    .batt-bar { height: 100%; border-radius: 6px; transition: width 0.6s ease, background 0.6s ease; }
+
+    /* ── Alert banner ─────────────────────────────────────── */
+    .alert {
+      padding: 8px 12px; border-radius: 6px; font-size: 0.83rem; margin-bottom: 12px;
+    }
+    .alert.info    { background: #d6eaf8; color: #1a5276; }
+    .alert.success { background: #d5f5e3; color: #1e8449; }
+
+    /* ── Stats row ────────────────────────────────────────── */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+
+    /* ── Log table ────────────────────────────────────────── */
+    .log-table { width: 100%; font-size: 0.78rem; border-collapse: collapse; }
+    .log-table th {
+      text-align: left; padding: 5px 7px; background: #f8f9fa;
+      color: #888; font-weight: 600; border-bottom: 1px solid #eee;
+    }
+    .log-table td { padding: 4px 7px; border-bottom: 1px solid #f0f0f0; }
+    .log-table tr:last-child td { border-bottom: none; }
+
+    .helper-text { font-size: 0.8rem; color: #888; font-style: italic; }
+
+    /* ── MQTT info ────────────────────────────────────────── */
+    details summary { font-size: 0.78rem; color: #888; cursor: pointer; }
+    .mqtt-info-code { font-size: 0.72rem; margin-top: 6px; color: #555; font-family: monospace; white-space: pre-line; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-title">🤖 Eliobot</div>
+  <div class="header-mode" id="header-mode">Mode : <strong>Veille</strong></div>
+  <span class="status-badge disconnected" id="status-badge">● Déconnecté</span>
+  <span class="last-signal" id="last-signal">Aucun signal</span>
+  <div class="battery-display" id="battery-display">🔋 —</div>
+</header>
+
+<!-- ══ LAYOUT ══════════════════════════════════════════════════════════════ -->
+<div class="layout">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+
+    <!-- Mode -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">⚙️ Mode</div>
+      <select id="mode-select">
+        <option value="idle">⏸ Veille</option>
+        <option value="manual">🕹️ Manuel</option>
+        <option value="exploration">🗺️ Exploration</option>
+      </select>
+      <button class="btn btn-primary" onclick="applyMode()">✅ Appliquer</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Vitesse -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">🚀 Vitesse</div>
+      <div class="speed-row">
+        <span>20</span><span id="speed-value" style="color:#7d3c98;font-weight:700;">70</span><span>100</span>
+      </div>
+      <input type="range" id="speed-slider" min="20" max="100" step="5" value="70"
+             oninput="onSpeedChange(this.value)" disabled>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- D-Pad -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">🕹️ D-Pad</div>
+      <div class="held-indicator" id="held-indicator">—</div>
+      <div class="dpad">
+        <div class="dpad-empty"></div>
+        <button class="dpad-btn" id="btn-forward" disabled>⬆️</button>
+        <div class="dpad-empty"></div>
+
+        <button class="dpad-btn" id="btn-left" disabled>⬅️</button>
+        <button class="dpad-btn stop" id="btn-stop" disabled>⏹</button>
+        <button class="dpad-btn" id="btn-right" disabled>➡️</button>
+
+        <div class="dpad-empty"></div>
+        <button class="dpad-btn" id="btn-backward" disabled>⬇️</button>
+        <div class="dpad-empty"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Actions utilitaires -->
+    <div class="sidebar-section">
+      <button class="btn btn-secondary" onclick="resetMap()">🔄 Réinitialiser carte</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Info MQTT -->
+    <div class="sidebar-section">
+      <details>
+        <summary>ℹ️ Connexion MQTT</summary>
+        <div class="mqtt-info-code" id="mqtt-info-text">Chargement…</div>
+      </details>
+    </div>
+
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('board', this)">📊 Tableau de bord</button>
+      <button class="tab-btn" onclick="switchTab('explore', this)">🗺️ Exploration</button>
+    </div>
+
+    <!-- ── Tab 1 : Tableau de bord ───────────────────────────────────────── -->
+    <div class="tab-content active" id="tab-board">
+      <div class="dashboard-grid">
+
+        <!-- Capteurs -->
+        <div class="card">
+          <h4>Capteurs d'obstacles</h4>
+          <div class="sensor-view">
+            <svg width="160" height="190" viewBox="-90 -100 180 200">
+              <!-- Corps robot -->
+              <rect x="-38" y="-62" width="76" height="124" rx="9" ry="9"
+                    fill="#7d3c98" stroke="#4a235a" stroke-width="2"/>
+              <text x="0" y="18" text-anchor="middle" font-size="24" fill="white">▲</text>
+
+              <!-- Capteur Avant G. -->
+              <circle id="sens-left"  cx="-56" cy="-48" r="14" fill="#27ae60"/>
+              <text   x="-56" y="-48" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Av.G</text>
+
+              <!-- Capteur Avant -->
+              <circle id="sens-front" cx="0"   cy="-82" r="14" fill="#27ae60"/>
+              <text   x="0"   y="-82" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Avant</text>
+
+              <!-- Capteur Avant D. -->
+              <circle id="sens-right" cx="56"  cy="-48" r="14" fill="#27ae60"/>
+              <text   x="56"  y="-48" text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Av.D</text>
+
+              <!-- Capteur Arrière -->
+              <circle id="sens-back"  cx="0"   cy="80"  r="14" fill="#27ae60"/>
+              <text   x="0"    y="80"  text-anchor="middle" font-size="6.5" fill="white" dy="2.5">Arr.</text>
+            </svg>
+
+            <div class="sensor-indicators">
+              <div>
+                <div class="sensor-dot clear" id="dot-left"></div>
+                <div class="sensor-name">Av. G.</div>
+              </div>
+              <div>
+                <div class="sensor-dot clear" id="dot-front"></div>
+                <div class="sensor-name">Avant</div>
+              </div>
+              <div>
+                <div class="sensor-dot clear" id="dot-right"></div>
+                <div class="sensor-name">Av. D.</div>
+              </div>
+              <div>
+                <div class="sensor-dot clear" id="dot-back"></div>
+                <div class="sensor-name">Arrière</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- État du robot -->
+        <div class="card">
+          <h4>État du robot</h4>
+
+          <!-- Batterie -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:0.83rem;margin-bottom:4px;">
+              <strong>Batterie</strong> : <span id="batt-text">—</span>
+            </div>
+            <div class="batt-bar-wrap">
+              <div class="batt-bar" id="batt-bar" style="width:0%;background:#27ae60;"></div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <div class="label">Mode</div>
+              <div class="value" id="metric-mode" style="font-size:0.9rem;">⏸ Veille</div>
+            </div>
+            <div class="metric">
+              <div class="label">Connexion</div>
+              <div class="value" id="metric-conn">❌</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Position (visible seulement en exploration) -->
+          <div id="position-section" style="display:none;">
+            <div class="metrics-grid">
+              <div class="metric">
+                <div class="label">Position X</div>
+                <div class="value" id="metric-x">0</div>
+              </div>
+              <div class="metric">
+                <div class="label">Position Y</div>
+                <div class="value" id="metric-y">0</div>
+              </div>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric">
+                <div class="label">Direction</div>
+                <div class="value" id="metric-heading">↑</div>
+              </div>
+              <div class="metric">
+                <div class="label">Étapes</div>
+                <div class="value" id="metric-steps">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="no-position-msg">
+            <p class="helper-text">Lance le mode <strong>Exploration</strong> pour voir la position en temps réel.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Tab 2 : Exploration ───────────────────────────────────────────── -->
+    <div class="tab-content" id="tab-explore">
+
+      <div class="alert info" id="explore-alert">
+        Passe en mode <strong>Exploration</strong> depuis la sidebar pour démarrer.
+      </div>
+
+      <div class="card">
+        <h4>Carte d'exploration</h4>
+        <div id="explore-map" style="height:380px;"></div>
+      </div>
+
+      <div class="stats-row" id="explore-stats" style="display:none;">
+        <div class="metric"><div class="label">Étapes</div><div class="value" id="stat-steps">0</div></div>
+        <div class="metric"><div class="label">Obstacles détectés</div><div class="value" id="stat-obs">0</div></div>
+        <div class="metric"><div class="label">Distance départ</div><div class="value" id="stat-dist">0.0 pas</div></div>
+      </div>
+
+      <div class="card" id="log-card" style="display:none;">
+        <h4 id="log-title">Journal</h4>
+        <div style="overflow-x:auto;">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>Heure</th><th>Position</th><th>Direction</th><th>Action</th>
+                <th>Avant</th><th>G.</th><th>D.</th>
+              </tr>
+            </thead>
+            <tbody id="log-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// CONSTANTES
+// ════════════════════════════════════════════════════════════════
+const HEADING_ARROW = {0:'↑', 1:'→', 2:'↓', 3:'←'};
+const HEADING_LABEL = {0:'Nord', 1:'Est', 2:'Sud', 3:'Ouest'};
+const HEADING_DX    = {0:0, 1:1, 2:0, 3:-1};
+const HEADING_DY    = {0:1, 1:0, 2:-1, 3:0};
+
+const MODE_LABELS = {
+  idle: '⏸ Veille', manual: '🕹️ Manuel', exploration: '🗺️ Exploration',
+};
+
+const ACTION_LABELS = {
+  start: '🚀 Départ', moved_forward: '⬆️ Avancé',
+  turned_right: '↩️ Tourné droite', turned_left: '↪️ Tourné gauche',
+  uturn: '🔄 Demi-tour', check: '🔍 Vérification',
+};
+
+const SENS_IDS = {
+  left:  ['sens-left',  'dot-left'],
+  front: ['sens-front', 'dot-front'],
+  right: ['sens-right', 'dot-right'],
+  back:  ['sens-back',  'dot-back'],
+};
+
+// ════════════════════════════════════════════════════════════════
+// ÉTAT LOCAL
+// ════════════════════════════════════════════════════════════════
+let state = {
+  connected: false, battery_v: null,
+  obstacles: {front:false, left:false, right:false, back:false},
+  mode: 'idle', steps: [], last_seen: null,
+};
+let heldDir      = null;
+let holdInterval = null;
+let currentSpeed = 70;
+let mapReady     = false;
+
+// ════════════════════════════════════════════════════════════════
+// WEBSOCKET
+// ════════════════════════════════════════════════════════════════
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onmessage = (ev) => {
+    try { state = JSON.parse(ev.data); updateUI(); }
+    catch(e) { console.error('WS parse:', e); }
+  };
+  ws.onclose = () => {
+    document.getElementById('status-badge').className = 'status-badge disconnected';
+    document.getElementById('status-badge').textContent = '● Déconnecté';
+    setTimeout(connectWS, 2000);
+  };
+  ws.onerror = () => ws.close();
+}
+
+// ════════════════════════════════════════════════════════════════
+// MISE À JOUR UI
+// ════════════════════════════════════════════════════════════════
+function updateUI() {
+  updateHeader();
+  updateSensors();
+  updateStatePanel();
+  updateExploration();
+}
+
+function updateHeader() {
+  const badge      = document.getElementById('status-badge');
+  const lastSigEl  = document.getElementById('last-signal');
+
+  // Calcul de l'âge du dernier signal
+  let ageMs = null;
+  if (state.last_seen) {
+    ageMs = Date.now() - new Date(state.last_seen).getTime();
+  }
+  const robotActive = state.connected && ageMs !== null && ageMs < 10000;
+
+  if (!state.connected) {
+    badge.className   = 'status-badge disconnected';
+    badge.textContent = '● Broker déconnecté';
+  } else if (!robotActive) {
+    badge.className   = 'status-badge warning';
+    badge.textContent = '● Robot absent';
+  } else {
+    badge.className   = 'status-badge connected';
+    badge.textContent = '● Robot actif';
+  }
+
+  if (ageMs !== null) {
+    const s = Math.round(ageMs / 1000);
+    lastSigEl.textContent = s < 60
+      ? 'Signal il y a ' + s + 's'
+      : 'Signal il y a ' + Math.floor(s / 60) + 'min';
+  } else {
+    lastSigEl.textContent = 'Aucun signal';
+  }
+
+  document.getElementById('header-mode').innerHTML =
+    'Mode : <strong>' + (MODE_LABELS[state.mode] || state.mode) + '</strong>';
+
+  const bv = state.battery_v;
+  const battEl = document.getElementById('battery-display');
+  if (bv !== null && bv !== undefined) {
+    const pct = battPct(bv);
+    battEl.textContent = (pct < 20 ? '🪫' : '🔋') + ' ' + bv.toFixed(2) + 'V  ' + pct + '%';
+  } else {
+    battEl.textContent = '🔋 —';
+  }
+
+  // Activer/désactiver les contrôles manuels
+  const manual = state.mode === 'manual';
+  document.getElementById('speed-slider').disabled = !manual;
+  document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = !manual);
+}
+
+function updateSensors() {
+  const obs = state.obstacles || {};
+  const BLOCKED = '#e74c3c', CLEAR = '#27ae60';
+  for (const [key, [svgId, dotId]] of Object.entries(SENS_IDS)) {
+    const blocked = obs[key] === true;
+    const circle = document.getElementById(svgId);
+    if (circle) circle.setAttribute('fill', blocked ? BLOCKED : CLEAR);
+    const dot = document.getElementById(dotId);
+    if (dot) dot.className = 'sensor-dot ' + (blocked ? 'blocked' : 'clear');
+  }
+}
+
+function battPct(v) {
+  return Math.max(0, Math.min(100, Math.round((v - 3.0) / (4.2 - 3.0) * 100)));
+}
+
+function updateStatePanel() {
+  const bv = state.battery_v;
+  if (bv !== null && bv !== undefined) {
+    const pct = battPct(bv);
+    document.getElementById('batt-text').textContent = bv.toFixed(2) + ' V — ' + pct + '%';
+    const bar = document.getElementById('batt-bar');
+    bar.style.width = pct + '%';
+    bar.style.background = pct < 20 ? '#e74c3c' : pct < 40 ? '#e67e22' : '#27ae60';
+  } else {
+    document.getElementById('batt-text').textContent = '—';
+    document.getElementById('batt-bar').style.width = '0%';
+  }
+
+  document.getElementById('metric-mode').textContent = MODE_LABELS[state.mode] || state.mode;
+  document.getElementById('metric-conn').textContent = state.connected ? '✅' : '❌';
+
+  const steps = state.steps || [];
+  const hasCur = steps.length > 0;
+  document.getElementById('position-section').style.display = hasCur ? '' : 'none';
+  document.getElementById('no-position-msg').style.display  = hasCur ? 'none' : '';
+
+  if (hasCur) {
+    const cur = steps[steps.length - 1];
+    document.getElementById('metric-x').textContent = cur.x ?? 0;
+    document.getElementById('metric-y').textContent = cur.y ?? 0;
+    document.getElementById('metric-heading').textContent = HEADING_ARROW[cur.heading ?? 0];
+    document.getElementById('metric-steps').textContent = steps.length;
+  }
+}
+
+function updateExploration() {
+  const steps = state.steps || [];
+  const mode  = state.mode;
+
+  // Alert
+  const alertEl = document.getElementById('explore-alert');
+  if (mode === 'exploration') {
+    alertEl.className = 'alert success';
+    alertEl.innerHTML = '🗺️ Mode Exploration actif — le robot navigue en autonomie';
+  } else {
+    alertEl.className = 'alert info';
+    alertEl.innerHTML = 'Passe en mode <strong>Exploration</strong> depuis la sidebar pour démarrer.';
+  }
+
+  // Carte Plotly
+  updateMap(steps);
+
+  // Stats & journal
+  const has = steps.length > 0;
+  document.getElementById('explore-stats').style.display = has ? '' : 'none';
+  document.getElementById('log-card').style.display      = has ? '' : 'none';
+
+  if (has) {
+    const obsCount = steps.filter(s => s.front || s.left || s.right).length;
+    const cur = steps[steps.length - 1];
+    const dist = Math.sqrt((cur.x ?? 0) ** 2 + (cur.y ?? 0) ** 2).toFixed(1);
+
+    document.getElementById('stat-steps').textContent = steps.length;
+    document.getElementById('stat-obs').textContent   = obsCount;
+    document.getElementById('stat-dist').textContent  = dist + ' pas';
+    document.getElementById('log-title').textContent  = 'Journal (' + steps.length + ' étapes)';
+
+    // Journal — 30 derniers, ordre inversé
+    const last30 = steps.slice(-30).reverse();
+    document.getElementById('log-body').innerHTML = last30.map(s => {
+      const h = s.heading ?? 0;
+      return `<tr>
+        <td>${s.ts||''}</td>
+        <td>(${s.x??0}, ${s.y??0})</td>
+        <td>${HEADING_ARROW[h]} ${HEADING_LABEL[h]}</td>
+        <td>${ACTION_LABELS[s.action] || s.action || ''}</td>
+        <td>${s.front ? '🔴':'🟢'}</td>
+        <td>${s.left  ? '🔴':'🟢'}</td>
+        <td>${s.right ? '🔴':'🟢'}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// PLOTLY MAP
+// ════════════════════════════════════════════════════════════════
+const MAP_LAYOUT = {
+  xaxis: {showgrid:true, gridcolor:'#ecf0f1', zeroline:true,
+          zerolinewidth:2, zerolinecolor:'#bdc3c7', title:'X (pas)'},
+  yaxis: {showgrid:true, gridcolor:'#ecf0f1', zeroline:true,
+          zerolinewidth:2, zerolinecolor:'#bdc3c7', scaleanchor:'x', title:'Y (pas)'},
+  legend: {orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1},
+  margin: {l:50, r:10, t:30, b:40},
+  plot_bgcolor:'white',
+  paper_bgcolor:'rgba(0,0,0,0)',
+};
+
+function updateMap(steps) {
+  const el = document.getElementById('explore-map');
+  const cur = steps.length > 0 ? steps[steps.length - 1] : null;
+  const traces = [];
+
+  if (steps.length > 0) {
+    traces.push({
+      x: steps.map(s => s.x), y: steps.map(s => s.y),
+      mode: 'lines+markers',
+      line: {color:'#3498db', width:2},
+      marker: {size:5, color:'#3498db'},
+      name: 'Chemin',
+    });
+
+    const obsX = [], obsY = [];
+    for (const s of steps) {
+      if (s.front) {
+        const h = s.heading ?? 0;
+        obsX.push(s.x + HEADING_DX[h]);
+        obsY.push(s.y + HEADING_DY[h]);
+      }
+    }
+    if (obsX.length > 0) {
+      traces.push({
+        x: obsX, y: obsY, mode: 'markers',
+        marker: {size:14, color:'#e74c3c', symbol:'x-thin-open', line:{width:3, color:'#e74c3c'}},
+        name: 'Obstacles',
+      });
+    }
+  }
+
+  if (cur) {
+    const h = cur.heading ?? 0;
+    traces.push({
+      x: [cur.x], y: [cur.y], mode: 'markers+text',
+      marker: {size:18, color:'#8e44ad', symbol:'circle', line:{color:'white', width:2}},
+      text: [HEADING_ARROW[h]], textposition: 'middle center',
+      textfont: {size:14, color:'white'},
+      name: 'Eliobot',
+    });
+  } else {
+    traces.push({
+      x: [0], y: [0], mode: 'markers',
+      marker: {size:14, color:'#8e44ad', symbol:'circle'},
+      name: 'Eliobot (départ)',
+    });
+  }
+
+  Plotly.react(el, traces, MAP_LAYOUT, {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+// D-PAD — Dead-man's switch côté client (envoie toutes les 500ms)
+// ════════════════════════════════════════════════════════════════
+function dpadStart(dir) {
+  if (state.mode !== 'manual') return;
+  if (heldDir === dir) return; // déjà actif
+  dpadClear();
+  heldDir = dir;
+  document.getElementById('held-indicator').textContent = '▶ ' + dir;
+  sendMove(dir);
+  holdInterval = setInterval(() => { if (heldDir) sendMove(heldDir); }, 500);
+}
+
+function dpadStop() {
+  dpadClear();
+  sendMove('stop');
+}
+
+function dpadClear() {
+  if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
+  heldDir = null;
+  const el = document.getElementById('held-indicator');
+  if (el) el.textContent = '—';
+}
+
+// ════════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════
+// COMMANDES REST
+// ════════════════════════════════════════════════════════════════
+async function post(url, body = {}) {
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+  } catch(e) { console.error('POST', url, e); }
+}
+
+function applyMode() {
+  const mode = document.getElementById('mode-select').value;
+  post('/command/mode', {mode});
+  if (mode !== 'manual') dpadClear();
+}
+
+let speedTimer = null;
+function onSpeedChange(val) {
+  currentSpeed = parseInt(val);
+  document.getElementById('speed-value').textContent = val;
+  clearTimeout(speedTimer);
+  speedTimer = setTimeout(() => post('/command/speed', {speed: currentSpeed}), 200);
+}
+
+function sendMove(dir) { post('/command/move', {direction: dir}); }
+
+function resetMap() { post('/command/reset_map'); }
+
+// ════════════════════════════════════════════════════════════════
+// INIT D-PAD LISTENERS (pointer events pour souris + tactile)
+// ════════════════════════════════════════════════════════════════
+function setupDpad() {
+  const DIRS = {
+    'btn-forward':  'forward',
+    'btn-backward': 'backward',
+    'btn-left':     'right',   // gauche/droite inversés par rapport au référentiel robot
+    'btn-right':    'left',
+  };
+
+  for (const [id, dir] of Object.entries(DIRS)) {
+    const btn = document.getElementById(id);
+    btn.addEventListener('pointerdown',  (e) => { e.preventDefault(); btn.setPointerCapture(e.pointerId); dpadStart(dir); });
+    btn.addEventListener('pointerup',   (e) => { e.preventDefault(); dpadStop(); });
+    btn.addEventListener('pointerleave',(e) => { if (heldDir === dir) dpadStop(); });
+  }
+
+  document.getElementById('btn-stop').addEventListener('click', () => dpadStop());
+}
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+setupDpad();
+
+// Carte vide initiale
+Plotly.newPlot('explore-map', [{
+  x:[0], y:[0], mode:'markers',
+  marker:{size:14, color:'#8e44ad', symbol:'circle'},
+  name:'Eliobot (départ)',
+}], MAP_LAYOUT, {responsive:true, displayModeBar:false});
+
+// Info MQTT
+document.getElementById('mqtt-info-text').textContent =
+  'Broker : ' + location.hostname + '\nWebSocket : ' + location.host + '/ws';
+
+connectWS();
+</script>
+</body>
+</html>

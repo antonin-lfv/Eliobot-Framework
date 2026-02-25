@@ -55,7 +55,11 @@ Projets-eliobot/
 │   ├── lib/               # Bibliotheques (elio.py + Adafruit)
 │   ├── www/               # Interface web
 │   └── sd/                # Fichiers SD
+└── server/
+    └── control-dashboard/ # Dashboard FastAPI + broker MQTT (Raspberry Pi)
 ```
+
+> Voir [server/control-dashboard/README.md](server/control-dashboard/README.md) pour l'installation et l'utilisation du dashboard.
 
 <br>
 

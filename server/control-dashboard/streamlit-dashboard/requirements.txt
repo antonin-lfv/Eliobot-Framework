@@ -1,0 +1,4 @@
+streamlit>=1.32.0
+paho-mqtt==1.6.1
+plotly>=5.18.0
+streamlit-autorefresh>=1.0.1

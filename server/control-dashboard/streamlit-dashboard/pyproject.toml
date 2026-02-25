@@ -1,0 +1,10 @@
+[project]
+name = "eliobot-dashboard"
+version = "0.1.0"
+description = "Eliobot Dashboard — Streamlit + MQTT"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit>=1.32.0",
+    "paho-mqtt>=2.1.0",
+    "plotly>=5.18.0",
+]

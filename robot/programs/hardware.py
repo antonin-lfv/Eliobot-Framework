@@ -2,8 +2,10 @@ import time
 import board
 import pwmio
 import analogio
+import digitalio
+import pulseio
 
-from elio import Motors, Buzzer, ObstacleSensor, EyesMatrix
+from elio import Motors, Buzzer, ObstacleSensor, EyesMatrix, LineSensor, IRRemote
 
 
 # ============================================================
@@ -36,6 +38,32 @@ def setup_obstacle_sensors():
     obstacleInput = [analogio.AnalogIn(pin) for pin in pins]
     return ObstacleSensor(obstacleInput)
     # 0: avant gauche, 1: avant, 2: avant droit, 3: arriere
+
+
+# === PINS CAPTEURS DE LIGNE ET IR ===
+# À adapter selon le câblage de votre Eliobot
+_LINE_SENSOR_PINS = [board.IO11, board.IO12, board.IO13, board.IO14, board.IO15]
+_LINE_CMD_PIN = board.IO10   # LED infrarouge des capteurs de ligne
+_IR_RECEIVER_PIN = board.IO9  # Récepteur IR télécommande
+
+
+def setup_line_sensor(motors):
+    """Initialise et retourne le capteur de ligne (5 capteurs).
+
+    Args:
+        motors: Instance Motors existante (obtenue via setup_motors()).
+                La même instance doit être réutilisée pour éviter les conflits PWM.
+    """
+    line_inputs = [analogio.AnalogIn(pin) for pin in _LINE_SENSOR_PINS]
+    line_cmd = digitalio.DigitalInOut(_LINE_CMD_PIN)
+    line_cmd.direction = digitalio.Direction.OUTPUT
+    return LineSensor(line_inputs, line_cmd, motors)
+
+
+def setup_ir_remote():
+    """Initialise et retourne le récepteur IR télécommande."""
+    ir_pin = pulseio.PulseIn(_IR_RECEIVER_PIN, maxlen=120, idle_state=True)
+    return IRRemote(ir_pin)
 
 
 # ============================================================
