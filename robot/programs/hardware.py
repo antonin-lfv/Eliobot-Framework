@@ -42,8 +42,8 @@ def setup_obstacle_sensors():
 
 # === PINS CAPTEURS DE LIGNE ET IR ===
 # À adapter selon le câblage de votre Eliobot
-_LINE_SENSOR_PINS = [board.IO11, board.IO12, board.IO13, board.IO14, board.IO15]
-_LINE_CMD_PIN = board.IO10   # LED infrarouge des capteurs de ligne
+_LINE_SENSOR_PINS = [board.IO10, board.IO11, board.IO12, board.IO13, board.IO14]
+_LINE_CMD_PIN = board.IO33   # LED infrarouge des capteurs de ligne
 _IR_RECEIVER_PIN = board.IO9  # Récepteur IR télécommande
 
 

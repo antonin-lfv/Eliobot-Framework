@@ -6,7 +6,7 @@ import adafruit_minimqtt.adafruit_minimqtt as MQTT
 
 from .hardware import (
     setup_motors, setup_buzzer, setup_matrix, setup_obstacle_sensors,
-    sleep_ms, now_ms, every_ms,
+    setup_line_sensor, sleep_ms, now_ms, every_ms,
 )
 from elio import WiFiConnectivity
 
@@ -30,10 +30,22 @@ HEADING_DY = {0: 1, 1: 0, 2: -1, 3: 0}
 def run():
     print("Starting MQTT Dashboard program...")
 
+    import json as _json
+    try:
+        with open("/config.json") as f:
+            _cfg = _json.load(f)
+        LINE_THRESHOLD = int(_cfg.get("line_threshold", 30000))
+        TURN_FACTOR    = float(_cfg.get("turn_factor", 1.0))
+    except Exception:
+        LINE_THRESHOLD = 30000
+        TURN_FACTOR    = 1.0
+    print(f"Seuil capteurs de ligne : {LINE_THRESHOLD} | Facteur rotation : {TURN_FACTOR}")
+
     matrix  = setup_matrix()
     buzzer  = setup_buzzer()
     motors  = setup_motors()
     sensors = setup_obstacle_sensors()
+    line_sensor = setup_line_sensor(motors)
 
     BROKER_IP = os.getenv("BROKER_IP")
     PORT      = int(os.getenv("PORT", 1883))
@@ -76,15 +88,48 @@ def run():
         "ex_right": False,
         # Dernière action terminée (pour le log du dashboard)
         "ex_last_action": "start",
+
+        # Télémétrie yeux — mis à jour par set_eyes()
+        "eyes_pattern": "emotionConfused",
+        "eyes_color":   list(LED_IDLE),
+
+        # Son
+        "muted": False,
     }
+
+    # ── Helpers yeux, lignes & son ─────────────────────────
+
+    def beep(sound_fn):
+        """Joue un son seulement si le robot n'est pas muet."""
+        if not state["muted"]:
+            sound_fn()
+
+    def set_eyes(pattern_name, color):
+        """Affiche un pattern sur la matrice et mémorise l'état pour la télémétrie."""
+        matrix.set_matrix_logo(getattr(matrix, pattern_name), color)
+        state["eyes_pattern"] = pattern_name
+        state["eyes_color"]   = list(color)
+
+    def read_lines_batch():
+        """Lit les 5 capteurs IR en une seule séquence on/off (40ms total).
+        Retourne les valeurs brutes (ambient - lit), entiers signés 16-bit.
+        Valeur positive élevée = ligne noire, négative/nulle = surface blanche.
+        """
+        line_sensor.lineCmd.value = True
+        sleep_ms(20)
+        lit = [inp.value for inp in line_sensor.lineInput]
+        line_sensor.lineCmd.value = False
+        sleep_ms(20)
+        ambient = [inp.value for inp in line_sensor.lineInput]
+        return [ambient[i] - lit[i] for i in range(5)]
 
     # ── Callbacks MQTT ─────────────────────────────────────
 
     def on_connected(client, userdata, flags, rc):
         print(f"MQTT connecté ({BROKER_IP}:{PORT})")
         client.subscribe("elio/command/#")
-        matrix.set_matrix_logo(matrix.emotionHappy, LED_IDLE)
-        buzzer.sound_blink()
+        set_eyes("emotionHappy", LED_IDLE)
+        beep(buzzer.sound_blink)
         # Annoncer le mode initial
         client.publish("elio/telemetry/mode", state["mode"])
 
@@ -128,6 +173,15 @@ def run():
             except ValueError:
                 pass
 
+        # ── Mute / unmute ──
+        elif topic == "elio/command/mute":
+            state["muted"] = (message == "1")
+            print(f"Son : {'muet' if state['muted'] else 'actif'}")
+
+        # ── Test buzzer ──
+        elif topic == "elio/command/buzzer":
+            beep(buzzer.sound_blink)
+
         # ── Reset carte d'exploration ──
         elif topic == "elio/command/reset_map":
             state["ex_x"]           = 0
@@ -137,6 +191,38 @@ def run():
             state["ex_until"]       = 0
             state["ex_last_action"] = "start"
             print("Carte réinitialisée")
+
+        # ── Commande de mouvement exploration (depuis le cerveau serveur) ──
+        elif topic == "elio/command/explore_step" and state["mode"] == "exploration":
+            if state["ex_state"] != "waiting":
+                return  # pas prêt, ignorer
+            rps      = motors.repetition_per_second()
+            gear     = motors.SPACE_BETWEEN_WHEELS / motors.WHEEL_DIAMETER
+            move_ms  = int((STEP_CM / motors.DISTANCE_PER_REVOLUTION / rps) * 1000) + 100
+            turn_ms  = int((TURN_DEG / (360.0 * rps)) * gear * 1000 * TURN_FACTOR) + 100
+            uturn_ms = int((180.0    / (360.0 * rps)) * gear * 1000 * TURN_FACTOR) + 100
+            t = now_ms()
+            if message == "forward":
+                motors.move_forward(EXPLORE_SPEED)
+                state["ex_state"] = "moving"
+                state["ex_until"] = t + move_ms
+                set_eyes("arrowUp", LED_EXPLORE)
+            elif message == "turn_right":
+                motors.turn_right(EXPLORE_SPEED)
+                state["ex_state"] = "turning_right"
+                state["ex_until"] = t + turn_ms
+                set_eyes("arrowRight", LED_EXPLORE)
+            elif message == "turn_left":
+                motors.turn_left(EXPLORE_SPEED)
+                state["ex_state"] = "turning_left"
+                state["ex_until"] = t + turn_ms
+                set_eyes("arrowLeft", LED_EXPLORE)
+            elif message == "uturn":
+                motors.turn_right(EXPLORE_SPEED)
+                state["ex_state"] = "uturn"
+                state["ex_until"] = t + uturn_ms
+                set_eyes("emotionAngry", LED_EXPLORE)
+                beep(buzzer.sound_bump)
 
     # ── Setup MQTT ─────────────────────────────────────────
     pool = socketpool.SocketPool(wifi.radio)
@@ -168,6 +254,15 @@ def run():
                 }
                 mqtt_client.publish("elio/telemetry/obstacles", json.dumps(obs))
 
+            if every_ms("eyes", 500):
+                mqtt_client.publish("elio/telemetry/eyes", json.dumps({
+                    "pattern": state["eyes_pattern"],
+                    "color":   state["eyes_color"],
+                }))
+
+            if every_ms("lines", 1500):
+                mqtt_client.publish("elio/telemetry/lines", json.dumps(read_lines_batch()))
+
         except Exception as e:
             print(f"Telemetry error: {e}")
 
@@ -192,115 +287,71 @@ def run():
         if cmd is None or now >= state["manual_until"]:
             motors.motor_stop()
             if every_ms("idle_expr_m", 2000):
-                matrix.set_matrix_logo(matrix.emotionNeutral, LED_MANUAL)
+                set_eyes("emotionNeutral", LED_MANUAL)
             return
 
         spd = state["manual_speed"]
         if cmd == "forward":
             motors.move_forward(spd)
-            matrix.set_matrix_logo(matrix.arrowUp, LED_MANUAL)
+            set_eyes("arrowUp", LED_MANUAL)
         elif cmd == "backward":
             motors.move_backward(spd)
-            matrix.set_matrix_logo(matrix.arrowDown, LED_MANUAL)
+            set_eyes("arrowDown", LED_MANUAL)
         elif cmd == "left":
             motors.turn_in_place(spd, "left")
-            matrix.set_matrix_logo(matrix.arrowLeft, LED_MANUAL)
+            set_eyes("arrowLeft", LED_MANUAL)
         elif cmd == "right":
             motors.turn_in_place(spd, "right")
-            matrix.set_matrix_logo(matrix.arrowRight, LED_MANUAL)
+            set_eyes("arrowRight", LED_MANUAL)
         elif cmd == "stop":
             motors.motor_stop()
             state["manual_cmd"] = None
-            matrix.set_matrix_logo(matrix.emotionNeutral, LED_MANUAL)
+            set_eyes("emotionNeutral", LED_MANUAL)
 
     def exploration_tick(now: int):
         """
-        State machine non-bloquante — règle de la main droite.
+        State machine non-bloquante — architecture ROS-like.
 
-        États :
-          check          → lire capteurs, publier step, lancer l'action
-          turning_right  → attendre fin de rotation, puis passer en moving
-          turning_left   → idem
-          uturn          → demi-tour, retour à check
-          moving         → attendre fin de déplacement, mettre à jour position
+        Le robot est un pur exécuteur :
+          check    → lit les capteurs, publie l'état, passe en waiting
+          waiting  → attend la commande du serveur (elio/command/explore_step)
+          moving / turning_right / turning_left / uturn → exécution du mouvement
+
+        Le cerveau (choix de la prochaine direction) tourne sur le serveur FastAPI.
         """
         ex = state
 
-        # Action en cours : attendre
         if now < ex["ex_until"]:
             return
 
         es = ex["ex_state"]
 
-        # ── CHECK ────────────────────────────────────────
+        # ── CHECK : lecture capteurs + publication ────────
         if es == "check":
-            front = bool(sensors.get_obstacle(1))
-            left  = bool(sensors.get_obstacle(0))
-            right = bool(sensors.get_obstacle(2))
-
-            ex["ex_front"] = front
-            ex["ex_left"]  = left
-            ex["ex_right"] = right
-
-            # Publier l'état courant
+            ex["ex_front"] = bool(sensors.get_obstacle(1))
+            ex["ex_left"]  = bool(sensors.get_obstacle(0))
+            ex["ex_right"] = bool(sensors.get_obstacle(2))
             publish_step(ex["ex_last_action"])
+            ex["ex_state"] = "waiting"
+            set_eyes("emotionNeutral", LED_EXPLORE)
 
-            # Calculer les durées de manœuvre en fonction de la batterie
-            rps       = motors.repetition_per_second()
-            gear      = motors.SPACE_BETWEEN_WHEELS / motors.WHEEL_DIAMETER
-            move_ms   = int((STEP_CM / motors.DISTANCE_PER_REVOLUTION / rps) * 1000) + 100
-            turn_ms   = int((TURN_DEG / (360.0 * rps)) * gear * 1000) + 100
-            uturn_ms  = int((180.0    / (360.0 * rps)) * gear * 1000) + 100
-
-            # Règle de la main droite
-            if not right:
-                motors.turn_right(EXPLORE_SPEED)
-                ex["ex_state"]  = "turning_right"
-                ex["ex_until"]  = now + turn_ms
-                matrix.set_matrix_logo(matrix.arrowRight, LED_EXPLORE)
-
-            elif not front:
-                motors.move_forward(EXPLORE_SPEED)
-                ex["ex_state"] = "moving"
-                ex["ex_until"] = now + move_ms
-                matrix.set_matrix_logo(matrix.arrowUp, LED_EXPLORE)
-
-            elif not left:
-                motors.turn_left(EXPLORE_SPEED)
-                ex["ex_state"]  = "turning_left"
-                ex["ex_until"]  = now + turn_ms
-                matrix.set_matrix_logo(matrix.arrowLeft, LED_EXPLORE)
-
-            else:
-                # Impasse — demi-tour
-                motors.turn_right(EXPLORE_SPEED)
-                ex["ex_state"]  = "uturn"
-                ex["ex_until"]  = now + uturn_ms
-                matrix.set_matrix_logo(matrix.emotionAngry, LED_EXPLORE)
-                buzzer.sound_bump()
+        # ── WAITING : le serveur envoie explore_step ──────
+        elif es == "waiting":
+            pass  # géré dans on_message / elio/command/explore_step
 
         # ── TURNING RIGHT ─────────────────────────────────
         elif es == "turning_right":
             motors.motor_stop()
             ex["ex_heading"]     = (ex["ex_heading"] + 1) % 4
             ex["ex_last_action"] = "turned_right"
-            # Avancer d'un pas dans la nouvelle direction
-            rps    = motors.repetition_per_second()
-            move_ms = int((STEP_CM / motors.DISTANCE_PER_REVOLUTION / rps) * 1000) + 100
-            motors.move_forward(EXPLORE_SPEED)
-            ex["ex_state"]  = "moving"
-            ex["ex_until"]  = now + move_ms
+            ex["ex_state"]       = "check"
 
         # ── TURNING LEFT ──────────────────────────────────
         elif es == "turning_left":
             motors.motor_stop()
-            ex["ex_heading"]     = (ex["ex_heading"] + 3) % 4  # -1 mod 4
+            ex["ex_heading"]     = (ex["ex_heading"] + 3) % 4
             ex["ex_last_action"] = "turned_left"
-            rps    = motors.repetition_per_second()
-            move_ms = int((STEP_CM / motors.DISTANCE_PER_REVOLUTION / rps) * 1000) + 100
-            motors.move_forward(EXPLORE_SPEED)
-            ex["ex_state"]  = "moving"
-            ex["ex_until"]  = now + move_ms
+            ex["ex_state"]       = "check"
 
         # ── UTURN ─────────────────────────────────────────
         elif es == "uturn":
@@ -347,7 +398,7 @@ def run():
             if every_ms("idle_stop", 2000):
                 motors.motor_stop()
             if every_ms("idle_expr", 6000):
-                matrix.set_matrix_logo(matrix.emotionNeutral, LED_IDLE)
+                set_eyes("emotionNeutral", LED_IDLE)
 
         elif mode == "manual":
             handle_manual(now)

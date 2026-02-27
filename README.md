@@ -1,356 +1,298 @@
 <h1 align="center">
   <br>
-  Eliobot Framework v1.3
+  Eliobot Framework
   <br>
 </h1>
 
-<h4 align="center">Framework simple et direct pour programmer <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h4>
+<h3 align="center">Framework pour programmer un robot <a href="https://eliobot.com">Eliobot</a> (ESP32-S3 + CircuitPython).</h3>
+
+<br>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/CircuitPython-10.x-blueviolet.svg" alt="CircuitPython Eliobot">
-  <img src="https://img.shields.io/badge/Hardware-ESP32--S3-green.svg" alt="ESP32-S3">
-  <img src="https://img.shields.io/badge/Deploy-rsync-orange.svg" alt="rsync">
+  <img src="https://img.shields.io/badge/Version-1.3-6366f1?style=flat-square">
+  <img src="https://img.shields.io/badge/CircuitPython-10.x-blueviolet?style=flat-square">
+  <img src="https://img.shields.io/badge/Hardware-ESP32--S3-2e7d32?style=flat-square">
+  <img src="https://img.shields.io/badge/Deploy-rsync-f57c00?style=flat-square">
 </p>
 
 <p align="center">
-  <a href="#-architecture">Architecture</a> •
-  <a href="#-utilisation-rapide">Utilisation</a> •
-  <a href="#%EF%B8%8F-configuration">Configuration</a> •
-  <a href="#-programmes-disponibles">Programmes</a> •
-  <a href="#-dashboard-mqtt--fastapi">Dashboard</a> •
-  <a href="#-créer-un-programme">Créer un programme</a> •
-  <a href="#-api">API</a>
+  <img src="https://github.com/user-attachments/assets/fbfe0094-2d90-4b59-bac1-fa97b4c256aa" alt="Eliobot" height="300">
 </p>
 
-<p align="center">
-<img src="https://github.com/user-attachments/assets/fbfe0094-2d90-4b59-bac1-fa97b4c256aa" alt="Eliobot" height="340">
-</p>
+<br>
+
+Il y a deux façons d'utiliser ce framework :
+
+| | On Edge | Serveur |
+|---|---|---|
+| **Principe** | Un programme tourne directement sur le robot | Le robot est piloté à distance par un serveur |
+| **Matériel requis** | Robot seul | Robot + Raspberry Pi (ou tout Linux avec Docker) |
+| **Programmes** | `web_server`, `obstacles`, `line_follower`, `ir_control`, `dance`, `animations_fire` | `mqtt_dashboard` |
+| **Cas d'usage** | Comportements autonomes embarqués | Dashboard temps réel, exploration cartographique |
 
 ---
 
-# Objectifs
-
-- Un **seul point d'entree** (`main.py`)
-- Ajout de programmes **sans modifier le framework**
-- Deploiement rapide et sûr via `rsync`
-- Comportement stable meme en cas d'erreur (safe mode)
-
-<br>
-
-# Architecture
+# Structure du projet
 
 ```
 Projets-eliobot/
-├── deploy.sh              # Script de deploiement (override programme, dry-run...)
-├── robot/                 # Tout ce qui est copie sur le robot
-│   ├── main.py            # Point d'entree (auto-discovery + safe mode)
-│   ├── settings.toml      # Configuration (WiFi, programme actif, MQTT...)
-│   ├── config.json        # Calibration capteurs
-│   ├── programs/          # Programmes applicatifs
-│   │   ├── hardware.py    # Fonctions setup (motors, buzzer, matrix...)
-│   │   ├── registry.py    # Auto-discovery des programmes
-│   │   ├── safe_mode.py   # Programme de secours
-│   │   ├── web_server.py  # Serveur web HTTP
-│   │   ├── mqtt_client.py # Client MQTT
-│   │   ├── mqtt_dashboard.py # Client MQTT avancé (dashboard)
-│   │   ├── obstacles.py   # Evitement d'obstacles
-│   │   ├── animations_fire.py # Animations LED
-│   │   ├── dance.py       # Chorégraphie moteurs + LEDs + buzzer
-│   │   ├── ir_control.py  # Contrôle télécommande infrarouge
-│   │   └── line_follower.py   # Suivi de ligne
-│   ├── lib/               # Bibliotheques (elio.py + Adafruit)
-│   ├── www/               # Interface web
-│   └── sd/                # Fichiers SD
+├── deploy.sh                        # Déploiement rsync vers le robot
+├── robot/                           # Code embarqué sur le robot
+│   ├── main.py                      # Point d'entrée — auto-discovery + safe mode
+│   ├── settings.toml                # Config WiFi, programme actif, MQTT  (.gitignore)
+│   ├── config.json                  # Calibration capteurs
+│   └── programs/
+│       ├── hardware.py              # Initialisations hardware
+│       ├── registry.py              # Auto-discovery  (ne pas modifier)
+│       ├── safe_mode.py             # Mode secours automatique
+│       ├── web_server.py            # ─╮
+│       ├── obstacles.py             #  │  On Edge
+│       ├── line_follower.py         #  │
+│       ├── ir_control.py            #  │
+│       ├── dance.py                 #  │
+│       ├── animations_fire.py       # ─╯
+│       └── mqtt_dashboard.py        # ── Serveur (ROS-like)
 └── server/
-    └── control-dashboard/ # Dashboard FastAPI + broker MQTT (Raspberry Pi)
+    └── control-dashboard/           # Cerveau — Raspberry Pi / Docker
+        ├── docker-compose.yml
+        ├── mosquitto/
+        └── fastapi-dashboard/
+            ├── app.py               # Cerveau exploration + WebSocket + REST
+            └── static/
+                └── index.html       # Dashboard SPA
 ```
+
+**Mécanisme auto-discovery :** `main.py` lit `PROGRAM` dans `settings.toml` → `registry.py` charge le module dynamiquement → si crash → `safe_mode.py` prend le relais automatiquement.
+
+---
+---
+
+# 1. Utilisation On Edge
+
+> Le programme tourne entièrement sur le robot. Aucun serveur requis.
 
 <br>
 
-# Quick Start
-
-## 1. Choisir un programme
-
-Dans `robot/settings.toml` :
-
-```toml
-PROGRAM = "web_server"
-```
-
-Les programmes disponibles sont **auto-detectes** dans `robot/programs/`.
-
-## 2. Deployer sur le robot
-
-```bash
-./deploy.sh
-```
-
-Synchronisation automatique via `rsync`.
-
-## 3. Changer de programme (sans editer de fichier)
-
-```bash
-./deploy.sh --program obstacles
-./deploy.sh -p animations_fire
-```
-
-Afficher ce qui serait copié sans faire de modifications :
-
-```bash
-./deploy.sh --dry-run
-```
-
-<br>
-
-# Configuration
-
-### `robot/settings.toml`
-
-```toml
-PROGRAM = "web_server"
-
-SSID = "VotreReseau"
-PASSWORD = "VotreMotDePasse"
-
-BROKER_IP = "raspberrypi.local"
-PORT = 1883
-```
-
-### `robot/config.json`
-
-```json
-{
-    "line_threshold": 75000
-}
-```
-
-Utilise pour la calibration du capteur de ligne.
-
-<br>
-
-# Programmes disponibles
+## Programmes disponibles
 
 | Programme | Description |
 |---|---|
-| `web_server` | Serveur HTTP embarqué — contrôle moteurs, buzzer et LEDs depuis un navigateur |
-| `mqtt_client` | Client MQTT simple — publie la télémétrie (obstacles, batterie) et reçoit des commandes |
-| `mqtt_dashboard` | Client MQTT avancé — télémétrie complète + contrôle manuel + mode exploration autonome (compatible dashboard) |
-| `obstacles` | Évitement d'obstacles autonome (règle de la main droite) |
-| `line_follower` | Suivi de ligne avec capteur IR et retour visuel sur la matrice LED |
-| `ir_control` | Contrôle par télécommande infrarouge avec émotions visuelles et sonores |
-| `dance` | Chorégraphie synchronisée moteurs + buzzer + matrice LED (~25 secondes) |
-| `animations_fire` | Animations matricielles en boucle (feu, patterns...) |
-| `safe_mode` | Mode de secours automatique — activé si le programme sélectionné crashe |
+| `web_server` | Serveur HTTP embarqué — contrôle moteurs, buzzer et LEDs depuis un navigateur sur le réseau local |
+| `obstacles` | Évitement d'obstacles autonome en boucle |
+| `line_follower` | Suivi de ligne avec capteurs IR et retour visuel sur la matrice LED |
+| `ir_control` | Contrôle par télécommande infrarouge avec retour émotionnel (yeux + buzzer) |
+| `dance` | Chorégraphie synchronisée moteurs + buzzer + matrice LED (~25s) |
+| `animations_fire` | Animations matricielles en boucle |
+| `safe_mode` | Mode de secours — activé automatiquement si le programme actif crashe |
 
-<br>
-
-# Dashboard MQTT + FastAPI
-
-<p align="center">
-  <img src="server/control-dashboard/image_dashboard.png" alt="Dashboard preview">
-</p>
-
-Dashboard temps réel pour monitorer et contrôler le robot depuis un Raspberry Pi (ou tout Linux avec Docker). Il combine un broker MQTT Eclipse Mosquitto et un backend FastAPI exposant une interface web via WebSocket.
-
-> Voir [server/control-dashboard/README.md](server/control-dashboard/README.md) pour l'installation complète.
-
-## Architecture du dashboard
-
-```
-control-dashboard/
-├── docker-compose.yml          # Orchestration des services
-├── setup.sh                    # Script d'installation (Raspberry Pi)
-├── mosquitto/
-│   └── mosquitto.conf          # Configuration du broker MQTT
-└── fastapi-dashboard/          # Dashboard FastAPI + WebSocket
-    ├── app.py                  # Backend FastAPI (MQTT + WebSocket + REST)
-    ├── static/
-    │   └── index.html          # Frontend SPA (HTML + JS + Plotly CDN)
-    ├── pyproject.toml
-    └── Dockerfile
-```
-
-**Services Docker :**
-- `mosquitto` — Broker MQTT Eclipse Mosquitto 2.x (port `1883`)
-- `dashboard` — Dashboard FastAPI (port `8000`)
-
-## Mise en route rapide
-
-**1. Déployer sur le Raspberry Pi :**
-
-```bash
-rsync -av server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
-```
-
-**2. Démarrer les services :**
-
-```bash
-cd ~/eliobot-server/control-dashboard
-chmod +x setup.sh && ./setup.sh
-```
-
-**3. Configurer le robot (`robot/settings.toml`) :**
+## Déployer un programme
 
 ```toml
-PROGRAM   = "mqtt_dashboard"
-BROKER_IP = "<IP_DU_PI>"
-PORT      = 1883
+# robot/settings.toml
+PROGRAM  = "obstacles"
+SSID     = "VotreReseau"
+PASSWORD = "VotreMotDePasse"
 ```
-
-**4. Déployer le programme MQTT sur le robot :**
 
 ```bash
-./deploy.sh -p mqtt_dashboard
+./deploy.sh                    # Déploie le programme défini dans settings.toml
+./deploy.sh -p line_follower   # Override du programme au vol
+./deploy.sh --dry-run          # Simulation sans copie
 ```
 
-Le dashboard est accessible sur `http://<IP_DU_PI>:8000`.
+## Créer un programme
 
-## Fonctionnalités
-
-| Section | Description |
-|---|---|
-| **Header** | Statut connexion (🟢/🟡/🔴), dernier signal reçu, niveau batterie |
-| **Sidebar** | Sélecteur de mode, slider vitesse, D-Pad de contrôle |
-| **Capteurs** | Vue SVG des obstacles (avant gauche/droit, arrière), état du robot |
-| **Exploration** | Carte Plotly du chemin parcouru, obstacles détectés, journal des déplacements |
-
-**Modes de fonctionnement :**
-
-- **Idle** — robot en veille, moteurs coupés
-- **Manuel** — D-Pad maintenu avec dead-man's switch (arrêt automatique si pas de commande reçue dans les 800ms)
-- **Exploration** — navigation autonome par la règle de la main droite, carte affichée en temps réel
-
-## Topics MQTT
-
-| Topic | Direction | Payload |
-|---|---|---|
-| `elio/telemetry/battery` | Robot → Serveur | `float` — tension en volts |
-| `elio/telemetry/obstacles` | Robot → Serveur | JSON `{front, left, right, back}` |
-| `elio/telemetry/mode` | Robot → Serveur | `idle` \| `manual` \| `exploration` |
-| `elio/telemetry/step` | Robot → Serveur | JSON — étape d'exploration (x, y, heading, action) |
-| `elio/command/mode` | Serveur → Robot | `idle` \| `manual` \| `exploration` |
-| `elio/command/move` | Serveur → Robot | `forward` \| `backward` \| `left` \| `right` \| `stop` |
-| `elio/command/speed` | Serveur → Robot | `int` 0–100 |
-| `elio/command/reset_map` | Serveur → Robot | `1` |
-
-<br>
-
-# Creer un programme
-
-## Exemple minimal
-
-Creer un fichier dans `robot/programs/` :
+Créer un fichier dans `robot/programs/` avec une fonction `run()`. C'est tout.
 
 ```python
-# programs/mon_programme.py
-from .hardware import setup_buzzer, setup_matrix, sleep_ms
+# robot/programs/mon_programme.py
+from .hardware import setup_motors, setup_buzzer, setup_matrix, sleep_ms, every_ms
 
-PROGRAM_NAME = "mon_programme"  # Optionnel, sinon = nom du fichier
+PROGRAM_NAME = "mon_programme"
 
 def run():
-    # Setup
+    motors = setup_motors()
     buzzer = setup_buzzer()
     matrix = setup_matrix()
 
     buzzer.sound_startup()
 
-    # Boucle principale
     while True:
-        # Ta logique ici
-        sleep_ms(100)
+        if every_ms("check", 200):
+            # Ta logique ici
+            pass
+        sleep_ms(20)
 ```
 
-> Aucune modification de `main.py` ni de `__init__.py` requise.
+```bash
+./deploy.sh -p mon_programme
+```
 
-## Deploiement sur le robot
+> `every_ms("key", period_ms)` retourne `True` toutes les N ms sans jamais bloquer la boucle.
+> Aucune modification de `main.py`, `registry.py` ou `__init__.py` requise.
+
+## Calibration (`robot/config.json`)
+
+```json
+{
+  "line_threshold": 30000,
+  "turn_factor": 1.0
+}
+```
+
+| Clé | Rôle |
+|---|---|
+| `line_threshold` | Seuil détection ligne noire (`ambient − lit`, max 65535) |
+| `turn_factor` | Multiplicateur durée de rotation pour calibrer les 90° |
+
+## Debug REPL USB
 
 ```bash
-./deploy.sh --program mon_programme
+uv run mpremote connect port:/dev/cu.usbmodem* repl   # macOS
+uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
+```
+
+---
+---
+
+# 2. Utilisation depuis un serveur
+
+> Le robot embarque `mqtt_dashboard` et devient un **exécuteur pur**.
+> Le serveur (Raspberry Pi / Docker) est le **cerveau** : il cartographie, décide, commande.
+
+<br>
+
+```
+┌──────────────────────────────────┐         ┌──────────────────────────────────┐
+│         ROBOT (ESP32-S3)         │         │      SERVEUR (Raspberry Pi)      │
+│                                  │   WiFi  │                                  │
+│  mqtt_dashboard.py               │  ←────→ │  app.py  (FastAPI + MQTT)        │
+│                                  │  MQTT   │                                  │
+│  1. Lit les capteurs             │ ──────→ │  1. Reçoit position + capteurs   │
+│  2. Publie l'état                │         │  2. Calcule la prochaine action  │
+│  3. Attend une commande          │ ←────── │  3. Envoie la commande           │
+│  4. Exécute le mouvement         │         │  4. Met à jour la carte          │
+└──────────────────────────────────┘         └──────────────────────────────────┘
+          Exécuteur pur                         Cerveau — mémoire illimitée,
+          RAM limitée (~240KB)                  algorithmes complexes, dashboard
 ```
 
 <br>
 
-# API
+## Installation du serveur
 
-## Fonctions hardware (`programs/hardware.py`)
+```bash
+# 1. Copier sur le Raspberry Pi
+rsync -av server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
 
-```python
-from .hardware import (
-    setup_motors,           # Retourne l'objet Motors
-    setup_buzzer,           # Retourne l'objet Buzzer
-    setup_matrix,           # Retourne l'objet EyesMatrix
-    setup_obstacle_sensors, # Retourne l'objet ObstacleSensor
-    sleep_ms,               # Pause en millisecondes
-    now_ms,                 # Temps actuel en millisecondes
-    every_ms,               # Timer periodique non-bloquant
-)
+# 2. Démarrer les services Docker
+cd ~/eliobot-server/control-dashboard
+chmod +x setup.sh && ./setup.sh
 ```
 
-### Exemple avec timer periodique
+Dashboard accessible sur `http://<IP_DU_PI>:8000`.
 
-```python
-from .hardware import setup_matrix, sleep_ms, every_ms
+**Services Docker :**
+- `mosquitto` — broker MQTT Eclipse Mosquitto 2.x (port `1883`)
+- `dashboard` — FastAPI + WebSocket (port `8000`)
 
-def run():
-    matrix = setup_matrix()
-    toggle = False
+## Configuration du robot
 
-    while True:
-        # Execute toutes les 500ms
-        if every_ms("blink", 500):
-            if toggle:
-                matrix.clear_matrix()
-            else:
-                matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
-            toggle = not toggle
-
-        sleep_ms(10)
+```toml
+# robot/settings.toml
+PROGRAM   = "mqtt_dashboard"
+BROKER_IP = "<IP_DU_PI>"
+PORT      = 1883
+SSID      = "VotreReseau"
+PASSWORD  = "VotreMotDePasse"
 ```
 
-Ici, l'affichage de la matrice clignote toutes les 500ms sans bloquer la boucle principale.
-
-## Buzzer
-
-```python
-buzzer = setup_buzzer()
-
-# Sons basiques
-buzzer.play_tone(440, 0.2)        # Frequence, duree
-buzzer.play_tone(440, 0.2, 80)    # Frequence, duree, volume
-
-# Effets sonores
-buzzer.sound_startup()
-buzzer.sound_bump()
-buzzer.sound_happy()
-buzzer.sound_laser()
-buzzer.sound_alert()
-
-# Melodies
-buzzer.melody_hmm()
-buzzer.melody_alert()
-buzzer.melody_marseillaise()
-
-# Emotions
-buzzer.emotion_joie()
-buzzer.emotion_colere()
-buzzer.emotion_surprise()
+```bash
+./deploy.sh -p mqtt_dashboard
 ```
+
+## Fonctionnalités du dashboard
+
+<p align="center">
+  <img src="server/control-dashboard/image-dashboard.png" alt="Dashboard preview">
+</p>
+
+| Section | Description |
+|---|---|
+| **Header** | Statut connexion, tension batterie (jaune si branché USB), dernier signal reçu |
+| **Sidebar** | D-Pad manuel (dead-man's switch 800ms), slider vitesse, test buzzer, mute son |
+| **Tableau de bord** | Capteurs obstacles (SVG), capteurs de ligne (barres + valeurs brutes), yeux LED, état système |
+| **Exploration** | Carte Plotly du chemin, bouton Lancer/Arrêter, réinitialisation, journal des étapes |
+
+**Modes :**
+
+| Mode | Description |
+|---|---|
+| **Manuel** | D-Pad avec dead-man's switch — arrêt si pas de commande dans les 800ms |
+| **Exploration** | Navigation autonome ROS-like — le serveur envoie les commandes une par une |
+| **Idle** | Robot en veille, moteurs coupés (défaut à la connexion) |
+
+## Topics MQTT
+
+**Robot → Serveur**
+
+| Topic | Payload | Fréquence |
+|---|---|---|
+| `elio/telemetry/battery` | `float` volts | 5s |
+| `elio/telemetry/obstacles` | `{"front", "left", "right", "back"}` | 400ms |
+| `elio/telemetry/lines` | `[int × 5]` valeurs brutes `ambient − lit` | 1.5s |
+| `elio/telemetry/eyes` | `{"pattern", "color"}` | 500ms |
+| `elio/telemetry/mode` | `idle` \| `manual` \| `exploration` | au changement |
+| `elio/telemetry/step` | `{x, y, heading, action, front, left, right}` | après chaque action |
+
+**Serveur → Robot**
+
+| Topic | Payload |
+|---|---|
+| `elio/command/mode` | `idle` \| `manual` \| `exploration` |
+| `elio/command/move` | `forward` \| `backward` \| `left` \| `right` \| `stop` |
+| `elio/command/speed` | `int` 0–100 |
+| `elio/command/explore_step` | `forward` \| `turn_right` \| `turn_left` \| `uturn` |
+| `elio/command/buzzer` | `1` |
+| `elio/command/mute` | `1` \| `0` |
+| `elio/command/reset_map` | `1` |
+
+---
+---
+
+# 3. API Hardware
+
+> Disponible dans tous les programmes via `from .hardware import ...`
+
+<br>
 
 ## Motors
 
 ```python
 motors = setup_motors()
 
-# Deplacement
-motors.move_forward(speed=100)
-motors.move_backward(speed=100)
-motors.turn_left(speed=100)
-motors.turn_right(speed=100)
+motors.move_forward(speed=70)
+motors.move_backward(speed=70)
+motors.turn_left(speed=70)
+motors.turn_right(speed=70)
+motors.turn_in_place(speed=70, direction="left")
 motors.motor_stop()
+```
 
-# Deplacement precis
-motors.move_one_step("forward", distance=20)  # en cm
-motors.turn_one_step("left", angle=90)        # en degres
+## Buzzer
+
+```python
+buzzer = setup_buzzer()
+
+buzzer.play_tone(440, 0.2)      # fréquence Hz, durée s
+buzzer.sound_startup()
+buzzer.sound_bump()
+buzzer.sound_blink()
+buzzer.sound_happy()
+buzzer.sound_laser()
+buzzer.emotion_joie()
+buzzer.emotion_colere()
+buzzer.melody_marseillaise()
 ```
 
 ## EyesMatrix
@@ -358,18 +300,11 @@ motors.turn_one_step("left", angle=90)        # en degres
 ```python
 matrix = setup_matrix()
 
-# Affichage
+matrix.set_matrix_logo(matrix.emotionHappy,   (87, 49, 150))   # violet
+matrix.set_matrix_logo(matrix.emotionAngry,   (255, 0, 0))
+matrix.set_matrix_logo(matrix.arrowUp,        (0, 180, 80))
+matrix.set_matrix_logo(matrix.emotionNeutral, (50, 50, 50))
 matrix.clear_matrix()
-matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
-
-# Emotions disponibles
-matrix.emotionHappy
-matrix.emotionSad
-matrix.emotionAngry
-matrix.emotionLove
-matrix.emotionAmazed
-matrix.emotionConfused
-# ... et plus
 ```
 
 ## ObstacleSensor
@@ -377,39 +312,48 @@ matrix.emotionConfused
 ```python
 sensors = setup_obstacle_sensors()
 
-# Detection (True si obstacle)
 sensors.get_obstacle(0)  # Avant gauche
-sensors.get_obstacle(1)  # Avant
+sensors.get_obstacle(1)  # Avant (centre)
 sensors.get_obstacle(2)  # Avant droit
-sensors.get_obstacle(3)  # Arriere
+sensors.get_obstacle(3)  # Arrière
 ```
 
-<br>
+## LineSensor
 
-# Debug
+```python
+line_sensor = setup_line_sensor(motors)
 
-Acces REPL USB :
-
-```bash
-uv run mpremote connect port:/dev/cu.usbmodem0115BDE5B8841 repl
+# Valeur brute par capteur : ambient - lit  (0 à ~65535)
+# Valeur élevée positive = ligne noire détectée
+line_sensor.lineCmd.value = True
+lit     = [inp.value for inp in line_sensor.lineInput]
+line_sensor.lineCmd.value = False
+ambient = [inp.value for inp in line_sensor.lineInput]
+values  = [ambient[i] - lit[i] for i in range(5)]
 ```
 
-Pour trouver le nom du port sous macOS :
+## Timers non-bloquants
 
-```bash
-ls /dev/cu.usbmodem*
+```python
+from .hardware import every_ms, now_ms, sleep_ms
+
+while True:
+    if every_ms("batt", 5000):
+        # Exécuté toutes les 5 secondes
+        v = motors.get_battery_voltage()
+
+    if every_ms("display", 500):
+        # Exécuté toutes les 500ms
+        matrix.set_matrix_logo(matrix.emotionHappy, (87, 49, 150))
+
+    sleep_ms(20)
 ```
 
-et sous linux :
-
-```bash
-ls /dev/ttyACM*
-```
-
-<br>
+---
 
 # Ressources
 
-- [Eliobot](https://eliobot.com)
-- [CircuitPython](https://circuitpython.org)
-- [Adafruit CircuitPython Bundle](https://github.com/adafruit/Adafruit_CircuitPython_Bundle)
+- [Eliobot](https://eliobot.com) — site officiel et documentation hardware
+- [CircuitPython](https://circuitpython.org) — runtime embarqué
+- [FastAPI](https://fastapi.tiangolo.com) — backend dashboard
+- [Eclipse Mosquitto](https://mosquitto.org) — broker MQTT

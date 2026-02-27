@@ -7,6 +7,7 @@ import asyncio
 import copy
 import json
 import os
+import random
 import threading
 from collections import deque
 from contextlib import asynccontextmanager
@@ -24,6 +25,10 @@ MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 STATIC_DIR = Path(__file__).parent / "static"
 
+# Offsets de déplacement par heading : N=0, E=1, S=2, W=3
+_HDX = {0: 0, 1: 1, 2: 0, 3: -1}
+_HDY = {0: 1, 1: 0, 2: -1, 3: 0}
+
 # ── État partagé (accès thread-safe via _lock) ────────────────────────────────
 _lock = threading.Lock()
 _state: dict = {
@@ -33,6 +38,9 @@ _state: dict = {
     "obstacles": {"front": False, "left": False, "right": False, "back": False},
     "mode": "idle",
     "steps": deque(maxlen=1000),
+    "eyes":  {"pattern": "emotionConfused", "color": [50, 50, 50]},
+    "lines":   [0, 0, 0, 0, 0],
+    "visited": set(),   # cellules explorées (x, y) — cerveau exploration
 }
 
 
@@ -46,6 +54,9 @@ def _snapshot() -> dict:
             "obstacles": copy.copy(_state["obstacles"]),
             "mode":      _state["mode"],
             "steps":     list(_state["steps"]),
+            "eyes":      copy.copy(_state["eyes"]),
+            "lines":         list(_state["lines"]),
+            "visited_count": len(_state["visited"]),
         }
 
 
@@ -65,6 +76,8 @@ def _on_connect(client, userdata, flags, rc):
             ("elio/telemetry/obstacles", 0),
             ("elio/telemetry/mode",     0),
             ("elio/telemetry/step",     0),
+            ("elio/telemetry/eyes",     0),
+            ("elio/telemetry/lines",    0),
         ])
         print(f"[MQTT] Connecté à {MQTT_BROKER}:{MQTT_PORT}")
     else:
@@ -77,9 +90,64 @@ def _on_disconnect(client, userdata, rc):
     print(f"[MQTT] Déconnecté (rc={rc})")
 
 
+def _explore_next_step(step: dict):
+    """
+    Cerveau de l'exploration (architecture ROS-like).
+    Reçoit l'état courant du robot, calcule la meilleure action suivante
+    et la publie sur elio/command/explore_step.
+
+    Algorithme : greedy sur cellules non visitées + tirage aléatoire
+    pour briser les égalités. Mémoire illimitée côté serveur.
+    """
+    x       = step.get("x", 0)
+    y       = step.get("y", 0)
+    heading = step.get("heading", 0)
+    front   = step.get("front", False)
+    left    = step.get("left", False)
+    right   = step.get("right", False)
+
+    with _lock:
+        if _state["mode"] != "exploration":
+            return
+        _state["visited"].add((x, y))
+        visited = _state["visited"]
+
+    blocked = {
+        heading:           front,
+        (heading + 1) % 4: right,
+        (heading + 3) % 4: left,
+    }
+
+    candidates = []
+    for abs_dir in range(4):
+        rel = (abs_dir - heading) % 4
+        if rel == 2:
+            continue  # pas de demi-tour en premier passage
+        if blocked.get(abs_dir, False):
+            continue
+        tx = x + _HDX[abs_dir]
+        ty = y + _HDY[abs_dir]
+        score = 0 if (tx, ty) in visited else 10
+        candidates.append((score, rel))
+
+    if not candidates:
+        action = "uturn"
+    else:
+        best_score = max(c[0] for c in candidates)
+        best_rels  = [c[1] for c in candidates if c[0] == best_score]
+        rel        = random.choice(best_rels)
+        action     = {0: "forward", 1: "turn_right", 3: "turn_left"}.get(rel, "uturn")
+
+    print(f"[Exploration] ({x},{y}) h={heading} → {action} "
+          f"(visités={len(visited)}, candidats={len(candidates)})")
+    _publish("elio/command/explore_step", action)
+
+
 def _on_message(client, userdata, msg):
     topic   = msg.topic
     payload = msg.payload.decode("utf-8", errors="replace")
+    should_plan = False
+    step        = None
     with _lock:
         _state["last_seen"] = datetime.now(timezone.utc).isoformat()
         try:
@@ -97,9 +165,25 @@ def _on_message(client, userdata, msg):
                 step = json.loads(payload)
                 step["ts"] = datetime.now().strftime("%H:%M:%S")
                 _state["steps"].append(step)
+                should_plan = _state["mode"] == "exploration"
+
+            elif topic == "elio/telemetry/eyes":
+                data = json.loads(payload)
+                if isinstance(data, dict):
+                    _state["eyes"] = data
+
+            elif topic == "elio/telemetry/lines":
+                data = json.loads(payload)
+                if isinstance(data, list) and len(data) == 5:
+                    _state["lines"] = data
 
         except Exception as e:
             print(f"[MQTT] Erreur parsing {topic}: {e}")
+            should_plan = False
+
+    # Hors du lock : calcul + publication de la prochaine action
+    if should_plan:
+        _explore_next_step(step)
 
 
 _mqttc.on_connect    = _on_connect
@@ -221,6 +305,9 @@ class MoveCmd(BaseModel):
 class SpeedCmd(BaseModel):
     speed: int
 
+class MuteCmd(BaseModel):
+    muted: bool
+
 
 # ── Endpoints REST — commandes ────────────────────────────────────────────────
 @app.post("/command/mode")
@@ -244,10 +331,23 @@ async def cmd_speed(cmd: SpeedCmd):
     return {"ok": True}
 
 
+@app.post("/command/mute")
+async def cmd_mute(cmd: MuteCmd):
+    _publish("elio/command/mute", "1" if cmd.muted else "0")
+    return {"ok": True}
+
+
+@app.post("/command/buzzer")
+async def cmd_buzzer():
+    _publish("elio/command/buzzer", "1")
+    return {"ok": True}
+
+
 @app.post("/command/reset_map")
 async def cmd_reset_map():
     with _lock:
         _state["steps"].clear()
+        _state["visited"].clear()
     _publish("elio/command/reset_map", "1")
     return {"ok": True}
 

@@ -139,6 +139,40 @@
       transform: translateY(-1px);
     }
     .btn-secondary:active { transform: translateY(0); }
+    .btn-secondary.muted {
+      background: rgba(248, 113, 113, 0.12);
+      color: #b91c1c;
+      border-color: rgba(220, 38, 38, 0.28);
+    }
+    .btn-secondary.muted:hover {
+      background: rgba(248, 113, 113, 0.2);
+      border-color: rgba(220, 38, 38, 0.4);
+    }
+
+    /* ── Boutons exploration ─────────────────────────────── */
+    .explore-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .explore-actions .btn { flex: 1; width: auto; margin-top: 0; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .btn-explore {
+      background: rgba(52, 211, 153, 0.15);
+      color: #065f46;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .btn-explore:hover {
+      background: rgba(52, 211, 153, 0.25);
+      border-color: rgba(52, 211, 153, 0.55);
+      transform: translateY(-1px);
+    }
+    .btn-explore:active { transform: translateY(0); }
+    .btn-explore.exploring {
+      background: rgba(248, 113, 113, 0.12);
+      color: #b91c1c;
+      border-color: rgba(220, 38, 38, 0.28);
+    }
+    .btn-explore.exploring:hover {
+      background: rgba(248, 113, 113, 0.2);
+      border-color: rgba(220, 38, 38, 0.4);
+    }
 
     /* Speed slider */
     .speed-row {
@@ -308,6 +342,63 @@
     }
     .mqtt-info-row { display: flex; flex-direction: column; gap: 2px; }
     .mqtt-info-row span { color: #64748b; }
+    .page-credit {
+      text-align: center;
+      padding: 18px 0 6px;
+      font-size: 0.68rem;
+      color: #94a3b8;
+    }
+    .page-credit a {
+      color: #818cf8;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .page-credit a:hover { color: #6366f1; }
+
+    /* ── Yeux LED ───────────────────────────────────────── */
+    .eyes-container {
+      display: flex; justify-content: center; align-items: flex-start; gap: 16px;
+      margin-bottom: 12px;
+    }
+    .eye-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .eye-grid {
+      display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+      width: 68px; height: 68px;
+      background: rgba(15,23,42,0.06); border-radius: 8px; padding: 3px;
+    }
+    .eye-pixel {
+      border-radius: 50%;
+      background: rgba(226, 232, 240, 0.35);
+      transition: background 0.25s ease;
+    }
+    .eye-label { font-size: 0.62rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.07em; }
+    .eyes-info {
+      display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 2px;
+    }
+    .eye-color-swatch {
+      width: 13px; height: 13px; border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.12); flex-shrink: 0;
+    }
+    .eye-emotion-text { font-size: 0.8rem; color: #64748b; }
+
+    /* ── Capteurs de ligne ──────────────────────────────── */
+    .line-bar { display: flex; justify-content: center; gap: 10px; padding: 10px 0 6px; }
+    .line-sensor-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .line-bar-wrap {
+      width: 34px; height: 50px; border-radius: 6px;
+      background: rgba(241, 245, 249, 0.8);
+      border: 1.5px solid rgba(99, 102, 241, 0.13);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+      overflow: hidden; display: flex; align-items: flex-end;
+    }
+    .line-bar-fill {
+      width: 100%; height: 0%;
+      background: #94a3b8;
+      transition: height 0.25s ease, background 0.25s ease;
+    }
+    .line-bar-fill.active { background: #1e293b; }
+    .line-value { font-size: 0.55rem; color: #64748b; font-variant-numeric: tabular-nums; text-align: center; min-width: 34px; }
+    .line-sensor-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
   </style>
 </head>
 <body>
@@ -331,17 +422,6 @@
 
   <!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
   <aside class="sidebar">
-
-    <!-- Mode — activation directe au changement -->
-    <div class="sidebar-section">
-      <div class="sidebar-label">Mode</div>
-      <select id="mode-select" onchange="applyMode()">
-        <option value="manual">Manuel</option>
-        <option value="exploration">Exploration</option>
-      </select>
-    </div>
-
-    <div class="divider"></div>
 
     <!-- Vitesse -->
     <div class="sidebar-section">
@@ -388,12 +468,17 @@
 
     <!-- Actions utilitaires -->
     <div class="sidebar-section">
-      <button class="btn btn-secondary" onclick="resetMap()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      <button class="btn btn-secondary" id="btn-mute" onclick="toggleMute()">
+        <svg id="mute-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
         </svg>
-        Réinitialiser la carte
+        <span id="mute-label">Son</span>
+      </button>
+      <button class="btn btn-secondary" onclick="testBuzzer()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8a6 6 0 0 1 0 8"/><path d="M22 6a10 10 0 0 1 0 12"/><line x1="2" y1="12" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="16"/>
+        </svg>
+        Buzzer
       </button>
     </div>
 
@@ -470,7 +555,7 @@
           <div class="metrics-grid">
             <div class="metric">
               <div class="label">Mode</div>
-              <div class="value" id="metric-mode" style="font-size:0.88rem;">Manuel</div>
+              <div class="value" id="metric-mode">Manuel</div>
             </div>
             <div class="metric">
               <div class="label">Connexion</div>
@@ -509,19 +594,90 @@
           </div>
         </div>
 
-      </div>
-    </div>
+        <!-- Yeux LED -->
+        <div class="card">
+          <h4>Yeux (Matrice LED)</h4>
+          <div class="eyes-container">
+            <div class="eye-wrap">
+              <div class="eye-grid" id="eye-left"></div>
+              <span class="eye-label">Œil G.</span>
+            </div>
+            <div class="eye-wrap">
+              <div class="eye-grid" id="eye-right"></div>
+              <span class="eye-label">Œil D.</span>
+            </div>
+          </div>
+          <div class="eyes-info">
+            <div class="eye-color-swatch" id="eye-swatch"></div>
+            <span class="eye-emotion-text" id="eye-emotion">—</span>
+          </div>
+        </div>
+
+        <!-- Capteurs de ligne -->
+        <div class="card">
+          <h4>Capteurs de ligne</h4>
+          <div class="line-bar">
+            <div class="line-sensor-item">
+              <div class="line-bar-wrap"><div class="line-bar-fill" id="line-0"></div></div>
+              <span class="line-value" id="line-val-0">0</span>
+              <span class="line-sensor-label">Ext.G</span>
+            </div>
+            <div class="line-sensor-item">
+              <div class="line-bar-wrap"><div class="line-bar-fill" id="line-1"></div></div>
+              <span class="line-value" id="line-val-1">0</span>
+              <span class="line-sensor-label">G</span>
+            </div>
+            <div class="line-sensor-item">
+              <div class="line-bar-wrap"><div class="line-bar-fill" id="line-2"></div></div>
+              <span class="line-value" id="line-val-2">0</span>
+              <span class="line-sensor-label">Centre</span>
+            </div>
+            <div class="line-sensor-item">
+              <div class="line-bar-wrap"><div class="line-bar-fill" id="line-3"></div></div>
+              <span class="line-value" id="line-val-3">0</span>
+              <span class="line-sensor-label">D</span>
+            </div>
+            <div class="line-sensor-item">
+              <div class="line-bar-wrap"><div class="line-bar-fill" id="line-4"></div></div>
+              <span class="line-value" id="line-val-4">0</span>
+              <span class="line-sensor-label">Ext.D</span>
+            </div>
+          </div>
+          <p class="helper-text" style="text-align:center; margin-top:4px; font-size:0.72rem;">
+            Valeur brute (ambient − lit) — barre = intensité / 65535
+          </p>
+        </div>
+
+      </div><!-- /dashboard-grid -->
+
+      <div class="page-credit">Made with &#10084; by <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> &nbsp;·&nbsp; v1.3</div>
+    </div><!-- /tab-board -->
 
     <!-- ── Tab 2 : Exploration ───────────────────────────────────────────── -->
     <div class="tab-content" id="tab-explore">
 
       <div class="alert info" id="explore-alert">
-        Passe en mode <strong>Exploration</strong> depuis la sidebar pour démarrer.
+        Lance l'exploration pour demarrer la cartographie autonome.
       </div>
 
       <div class="card">
         <h4>Carte d'exploration</h4>
         <div id="explore-map"></div>
+        <div class="explore-actions">
+          <button class="btn btn-explore" id="btn-explore" onclick="toggleExploration()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <span id="btn-explore-label">Lancer l'exploration</span>
+          </button>
+          <button class="btn btn-secondary" onclick="resetMap()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+            </svg>
+            Reinitialiser la carte
+          </button>
+        </div>
       </div>
 
       <div class="stats-row" id="explore-stats" style="display:none;">
@@ -545,7 +701,10 @@
         </div>
       </div>
 
-    </div>
+      <div class="page-credit">Made with &#10084; by <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> &nbsp;·&nbsp; v1.3</div>
+
+    </div><!-- /tab-explore -->
+
   </main>
 </div>
 
@@ -553,6 +712,31 @@
 // ════════════════════════════════════════════════════════════════
 // CONSTANTES
 // ════════════════════════════════════════════════════════════════
+
+// Patterns des yeux (128 éléments : 0-63 = œil gauche, 64-127 = œil droit)
+// Copiés depuis elio.py — layout row-major 8×8 par œil
+const EYE_PATTERNS = {
+  arrowUp:        [0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0],
+  arrowDown:      [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0],
+  arrowLeft:      [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  arrowRight:     [0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+  emotionHappy:   [0,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0],
+  emotionNeutral: [0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0],
+  emotionAngry:   [0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,1,0],
+  emotionConfused:[0,0,0,1,1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0],
+};
+
+const EMOTION_LABELS = {
+  arrowUp:        '↑ Avancer',
+  arrowDown:      '↓ Reculer',
+  arrowLeft:      '← Gauche',
+  arrowRight:     '→ Droite',
+  emotionHappy:   'Heureux',
+  emotionNeutral: 'Neutre',
+  emotionAngry:   'En colère',
+  emotionConfused:'Confus',
+};
+
 const HEADING_ARROW = {0:'↑', 1:'→', 2:'↓', 3:'←'};
 const HEADING_LABEL = {0:'Nord', 1:'Est', 2:'Sud', 3:'Ouest'};
 const HEADING_DX    = {0:0, 1:1, 2:0, 3:-1};
@@ -581,9 +765,11 @@ let state = {
   obstacles: {front:false, left:false, right:false, back:false},
   mode: 'idle', steps: [], last_seen: null,
 };
-let heldDir      = null;
-let holdInterval = null;
-let currentSpeed = 70;
+let heldDir        = null;
+let holdInterval   = null;
+let currentSpeed   = 70;
+let prevRobotActive = false;
+let isMuted        = false;
 
 // ════════════════════════════════════════════════════════════════
 // WEBSOCKET
@@ -612,6 +798,8 @@ function updateUI() {
   updateSensors();
   updateStatePanel();
   updateExploration();
+  updateEyes();
+  updateLines();
 }
 
 function updateHeader() {
@@ -620,7 +808,9 @@ function updateHeader() {
 
   let ageMs = null;
   if (state.last_seen) ageMs = Date.now() - new Date(state.last_seen).getTime();
-  const robotActive = state.connected && ageMs !== null && ageMs < 10000;
+  const robotActive   = state.connected && ageMs !== null && ageMs < 10000;
+  const justConnected = robotActive && !prevRobotActive;
+  prevRobotActive     = robotActive;
 
   if (!state.connected) {
     badge.className   = 'status-badge disconnected';
@@ -649,10 +839,15 @@ function updateHeader() {
   const battLabel = document.getElementById('batt-label');
   const battIcon  = document.getElementById('batt-icon');
   if (bv !== null && bv !== undefined) {
-    const pct = battPct(bv);
-    battLabel.textContent = pct + '% · ' + bv.toFixed(2) + ' V';
-    const iconColor = pct < 15 ? '#f87171' : pct < 50 ? '#fb923c' : '#34d399';
-    battIcon.setAttribute('stroke', iconColor);
+    if (bv < 0.1) {
+      battLabel.textContent = 'Branché';
+      battIcon.setAttribute('stroke', '#f59e0b');
+    } else {
+      const pct = battPct(bv);
+      battLabel.textContent = pct + '% · ' + bv.toFixed(2) + ' V';
+      const iconColor = pct < 15 ? '#f87171' : pct < 50 ? '#fb923c' : '#34d399';
+      battIcon.setAttribute('stroke', iconColor);
+    }
   } else {
     battLabel.textContent = '—';
     battIcon.setAttribute('stroke', '#94a3b8');
@@ -661,6 +856,9 @@ function updateHeader() {
   const manual = state.mode === 'manual';
   document.getElementById('speed-slider').disabled = !manual;
   document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = !manual);
+
+  // Quand le robot vient de se connecter, on repasse en mode manuel
+  if (justConnected) post('/command/mode', {mode: 'manual'});
 }
 
 function updateSensors() {
@@ -683,11 +881,17 @@ function battPct(v) {
 function updateStatePanel() {
   const bv = state.battery_v;
   if (bv !== null && bv !== undefined) {
-    const pct = battPct(bv);
-    document.getElementById('batt-text').textContent = pct + '% — ' + bv.toFixed(2) + ' V';
     const bar = document.getElementById('batt-bar');
-    bar.style.width = pct + '%';
-    bar.style.background = pct < 20 ? '#f87171' : pct < 40 ? '#fb923c' : '#34d399';
+    if (bv < 0.1) {
+      document.getElementById('batt-text').textContent = 'Branché (USB)';
+      bar.style.width = '100%';
+      bar.style.background = '#f59e0b';
+    } else {
+      const pct = battPct(bv);
+      document.getElementById('batt-text').textContent = pct + '% — ' + bv.toFixed(2) + ' V';
+      bar.style.width = pct + '%';
+      bar.style.background = pct < 20 ? '#f87171' : pct < 40 ? '#fb923c' : '#34d399';
+    }
   } else {
     document.getElementById('batt-text').textContent = '—';
     document.getElementById('batt-bar').style.width = '0%';
@@ -714,14 +918,23 @@ function updateExploration() {
   const steps = state.steps || [];
   const mode  = state.mode;
 
+  const exploring = mode === 'exploration';
   const alertEl = document.getElementById('explore-alert');
-  if (mode === 'exploration') {
-    alertEl.className = 'alert success';
-    alertEl.innerHTML = 'Mode Exploration actif — le robot navigue en autonomie.';
-  } else {
-    alertEl.className = 'alert info';
-    alertEl.innerHTML = 'Passe en mode <strong>Exploration</strong> depuis la sidebar pour démarrer.';
+  if (alertEl) {
+    alertEl.className = exploring ? 'alert success' : 'alert info';
+    alertEl.innerHTML = exploring
+      ? 'Mode Exploration actif — le robot navigue en autonomie.'
+      : 'Lance l\'exploration pour demarrer la cartographie autonome.';
   }
+  const btnEl   = document.getElementById('btn-explore');
+  const labelEl = document.getElementById('btn-explore-label');
+  if (btnEl) {
+    btnEl.classList.toggle('exploring', exploring);
+    btnEl.querySelector('svg').innerHTML = exploring
+      ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+      : '<polygon points="5 3 19 12 5 21 5 3"/>';
+  }
+  if (labelEl) labelEl.textContent = exploring ? 'Arreter l\'exploration' : 'Lancer l\'exploration';
 
   updateMap(steps);
 
@@ -734,7 +947,8 @@ function updateExploration() {
     const cur = steps[steps.length - 1];
     const dist = Math.sqrt((cur.x ?? 0) ** 2 + (cur.y ?? 0) ** 2).toFixed(1);
 
-    document.getElementById('stat-steps').textContent = steps.length;
+    const moveCount = steps.filter(s => s.action === 'moved_forward').length;
+    document.getElementById('stat-steps').textContent = moveCount + ' / ' + steps.length;
     document.getElementById('stat-obs').textContent   = obsCount;
     document.getElementById('stat-dist').textContent  = dist + ' pas';
     document.getElementById('log-title').textContent  = 'Journal — 10 dernières étapes (total : ' + steps.length + ')';
@@ -752,6 +966,57 @@ function updateExploration() {
         <td>${s.right ? '🔴':'🟢'}</td>
       </tr>`;
     }).join('');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// YEUX LED
+// ════════════════════════════════════════════════════════════════
+function initEyeGrids() {
+  ['eye-left', 'eye-right'].forEach(id => {
+    const el = document.getElementById(id);
+    for (let i = 0; i < 64; i++) {
+      const px = document.createElement('div');
+      px.className = 'eye-pixel';
+      el.appendChild(px);
+    }
+  });
+}
+
+function updateEyes() {
+  const eyes    = state.eyes || {};
+  const pattern = EYE_PATTERNS[eyes.pattern] || EYE_PATTERNS['emotionConfused'];
+  const col     = eyes.color || [50, 50, 50];
+  const colorOn  = `rgb(${col[0]},${col[1]},${col[2]})`;
+  const colorOff = `rgba(${col[0]},${col[1]},${col[2]},0.10)`;
+
+  const leftPx  = document.getElementById('eye-left').children;
+  const rightPx = document.getElementById('eye-right').children;
+  for (let i = 0; i < 64; i++) {
+    leftPx[i].style.background  = pattern[i]      ? colorOn : colorOff;
+    rightPx[i].style.background = pattern[64 + i] ? colorOn : colorOff;
+  }
+
+  document.getElementById('eye-swatch').style.background = colorOn;
+  document.getElementById('eye-emotion').textContent =
+    EMOTION_LABELS[eyes.pattern] || eyes.pattern || '—';
+}
+
+// ════════════════════════════════════════════════════════════════
+// CAPTEURS DE LIGNE
+// ════════════════════════════════════════════════════════════════
+function updateLines() {
+  const lines = state.lines || [0, 0, 0, 0, 0];
+  for (let i = 0; i < 5; i++) {
+    const raw = typeof lines[i] === 'number' ? lines[i] : (lines[i] ? 65535 : 0);
+    const fill = document.getElementById('line-' + i);
+    const val  = document.getElementById('line-val-' + i);
+    if (fill) {
+      const pct = Math.max(0, Math.min(100, (raw / 65535) * 100));
+      fill.style.height = pct + '%';
+      fill.classList.toggle('active', raw > 0);
+    }
+    if (val) val.textContent = raw;
   }
 }
 
@@ -781,9 +1046,12 @@ function updateMap(steps) {
   const cur = steps.length > 0 ? steps[steps.length - 1] : null;
   const traces = [];
 
-  if (steps.length > 0) {
+  // Seuls les pas "moved_forward" changent la position — on trace uniquement ceux-là
+  const moves = steps.filter(s => s.action === 'moved_forward' || s.action === 'start');
+
+  if (moves.length > 0) {
     traces.push({
-      x: steps.map(s => s.x), y: steps.map(s => s.y),
+      x: moves.map(s => s.x), y: moves.map(s => s.y),
       mode: 'lines+markers',
       line: {color:'#3b82f6', width:2},
       marker: {size:5, color:'#3b82f6'},
@@ -871,14 +1139,19 @@ async function post(url, body = {}) {
   } catch(e) { console.error('POST', url, e); }
 }
 
-function applyMode() {
-  const mode = document.getElementById('mode-select').value;
-  post('/command/mode', {mode});
-  if (mode !== 'manual') dpadClear();
-  // Mise à jour optimiste : ne pas attendre la confirmation WebSocket
-  const manual = mode === 'manual';
-  document.getElementById('speed-slider').disabled = !manual;
-  document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = !manual);
+function toggleExploration() {
+  const exploring = state.mode === 'exploration';
+  const newMode = exploring ? 'manual' : 'exploration';
+  post('/command/mode', {mode: newMode});
+  if (exploring) {
+    // Retour manuel : réactiver le d-pad de manière optimiste
+    document.getElementById('speed-slider').disabled = false;
+    document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = false);
+  } else {
+    dpadClear();
+    document.getElementById('speed-slider').disabled = true;
+    document.querySelectorAll('.dpad-btn').forEach(b => b.disabled = true);
+  }
 }
 
 let speedTimer = null;
@@ -890,6 +1163,23 @@ function onSpeedChange(val) {
 }
 
 function sendMove(dir) { post('/command/move', {direction: dir}); }
+
+function toggleMute() {
+  isMuted = !isMuted;
+  post('/command/mute', {muted: isMuted});
+  const btn   = document.getElementById('btn-mute');
+  const label = document.getElementById('mute-label');
+  const icon  = document.getElementById('mute-icon');
+  btn.classList.toggle('muted', isMuted);
+  label.textContent = isMuted ? 'Muet' : 'Son';
+  // Icône selon l'état
+  icon.innerHTML = isMuted
+    ? '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>'
+    : '<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>';
+}
+
+function testBuzzer() { post('/command/buzzer'); }
+
 function resetMap() {
   post('/command/reset_map');
   requestAnimationFrame(() => Plotly.Plots.resize('explore-map'));
@@ -912,6 +1202,7 @@ function setupDpad() {
 // INIT
 // ════════════════════════════════════════════════════════════════
 setupDpad();
+initEyeGrids();
 
 Plotly.newPlot('explore-map', [{
   x:[0], y:[0], mode:'markers',
@@ -921,10 +1212,6 @@ Plotly.newPlot('explore-map', [{
 
 document.getElementById('mqtt-broker').textContent = location.hostname;
 document.getElementById('mqtt-ws').textContent     = location.host + '/ws';
-
-// Sync immédiat du mode au chargement — le robot démarre en "idle",
-// on lui envoie tout de suite le mode affiché dans le dropdown.
-applyMode();
 
 connectWS();
 </script>
