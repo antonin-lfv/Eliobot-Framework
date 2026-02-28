@@ -153,7 +153,6 @@ uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 ```
 
 ---
----
 
 # 2. Utilisation depuis un serveur
 
@@ -163,18 +162,18 @@ uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 <br>
 
 ```
-┌──────────────────────────────────┐         ┌──────────────────────────────────┐
-│         ROBOT (ESP32-S3)         │         │      SERVEUR (Raspberry Pi)      │
-│                                  │   WiFi  │                                  │
-│  mqtt_dashboard.py               │  ←────→ │  app.py  (FastAPI + MQTT)        │
-│                                  │  MQTT   │                                  │
-│  1. Lit les capteurs             │ ──────→ │  1. Reçoit position + capteurs   │
-│  2. Publie l'état                │         │  2. Calcule la prochaine action  │
-│  3. Attend une commande          │ ←────── │  3. Envoie la commande           │
-│  4. Exécute le mouvement         │         │  4. Met à jour la carte          │
-└──────────────────────────────────┘         └──────────────────────────────────┘
+┌──────────────────────────────────┐        ┌──────────────────────────────────┐
+│         ROBOT (ESP32-S3)         │        │      SERVEUR (Raspberry Pi)      │
+│                                  │  WiFi  │                                  │
+│  mqtt_dashboard.py               │ ←────→ │  app.py  (FastAPI + MQTT)        │
+│                                  │        │                                  │
+│  1. Lit les capteurs             │  MQTT  │  1. Reçoit position + capteurs   │
+│  2. Publie l'état                │ ─────→ │  2. Calcule la prochaine action  │
+│  3. Attend une commande          │ ←───── │  3. Envoie la commande           │
+│  4. Exécute le mouvement         │        │  4. Met à jour la carte          │
+└──────────────────────────────────┘        └──────────────────────────────────┘
           Exécuteur pur                         Cerveau — mémoire illimitée,
-          RAM limitée (~240KB)                  algorithmes complexes, dashboard
+          RAM limitée (~8MB)                  algorithmes complexes, dashboard
 ```
 
 <br>
@@ -257,7 +256,6 @@ PASSWORD  = "VotreMotDePasse"
 | `elio/command/mute` | `1` \| `0` |
 | `elio/command/reset_map` | `1` |
 
----
 ---
 
 # 3. API Hardware
