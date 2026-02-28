@@ -119,7 +119,7 @@ def run():
 
     while True:
         if every_ms("check", 200):
-            # Ta logique ici
+            # Logique exécutée toutes les 200ms sans bloquer la boucle
             pass
         sleep_ms(20)
 ```
