@@ -84,11 +84,11 @@ chmod +x deploy.sh
 ./deploy.sh -p animations_fire
 ```
 
+<br>
+
 # 1. Utilisation On Edge
 
 > Le programme tourne entièrement sur le robot. Aucun serveur requis.
-
-<br>
 
 ## Programmes disponibles
 
@@ -198,6 +198,8 @@ uv run mpremote connect port:/dev/cu.usbmodem* repl   # macOS
 uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 ```
 
+<br>
+
 # 2. Utilisation depuis un serveur
 
 > Le robot embarque `mqtt_dashboard` et devient un **exécuteur pur**.
@@ -303,7 +305,7 @@ Puis déployez le programme `mqtt_dashboard` sur le robot :
 | `elio/command/mute` | `1` \| `0` |
 | `elio/command/reset_map` | `1` |
 
----
+<br>
 
 # 3. API Hardware
 
