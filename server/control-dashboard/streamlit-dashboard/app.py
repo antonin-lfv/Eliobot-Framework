@@ -45,7 +45,7 @@ ACTION_LABELS = {
 
 
 # ============================================================
-# CLIENT MQTT — Singleton partagé entre tous les reruns
+# CLIENT MQTT - Singleton partagé entre tous les reruns
 # ============================================================
 class RobotMQTTClient:
     """Client MQTT thread-safe qui tourne en arrière-plan."""
@@ -342,12 +342,12 @@ with col_battery:
         icon = "🪫" if pct < 20 else "🔋"
         st.metric(f"{icon} Batterie", f"{battery_v:.2f} V", f"{pct}%")
     else:
-        st.metric("🔋 Batterie", "—")
+        st.metric("🔋 Batterie", "-")
 
 st.divider()
 
 # ============================================================
-# SIDEBAR — CONTRÔLE
+# SIDEBAR - CONTRÔLE
 # ============================================================
 with st.sidebar:
     st.header("⚙️ Contrôle")
@@ -432,7 +432,7 @@ with st.sidebar:
         st.code(f"Broker  : {MQTT_BROKER}\nPort    : {MQTT_PORT}\nTopics  : elio/#")
 
 # ============================================================
-# CONTENU PRINCIPAL — 2 ONGLETS
+# CONTENU PRINCIPAL - 2 ONGLETS
 # ============================================================
 tab_board, tab_explore = st.tabs(["📊 Tableau de bord", "🗺️ Exploration"])
 
@@ -467,7 +467,7 @@ with tab_board:
         if battery_v is not None:
             pct = battery_pct(battery_v)
             color = "red" if pct < 20 else "orange" if pct < 40 else "green"
-            st.markdown(f"**Batterie** : `{battery_v:.2f} V` — `{pct}%`")
+            st.markdown(f"**Batterie** : `{battery_v:.2f} V` - `{pct}%`")
             st.progress(pct / 100)
         else:
             st.warning("Batterie : données non reçues")
@@ -497,7 +497,7 @@ with tab_board:
 with tab_explore:
     # Indicateur de mode en haut
     if robot_mode == "exploration":
-        st.success("🗺️ Mode Exploration actif — le robot navigue en autonomie")
+        st.success("🗺️ Mode Exploration actif - le robot navigue en autonomie")
     else:
         st.info("Passe en mode **Exploration** depuis la sidebar pour démarrer la navigation autonome.")
 

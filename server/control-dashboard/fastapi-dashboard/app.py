@@ -1,5 +1,5 @@
 """
-Eliobot Dashboard — FastAPI backend
+Eliobot Dashboard - FastAPI backend
 WebSocket push temps réel (300ms) + REST pour commandes MQTT
 """
 
@@ -40,7 +40,7 @@ _state: dict = {
     "steps": deque(maxlen=1000),
     "eyes":  {"pattern": "emotionConfused", "color": [50, 50, 50]},
     "lines":   [0, 0, 0, 0, 0],
-    "visited": set(),   # cellules explorées (x, y) — cerveau exploration
+    "visited": set(),   # cellules explorées (x, y) - cerveau exploration
 }
 
 
@@ -199,7 +199,7 @@ def _publish(topic: str, payload: str):
         print(f"[MQTT] Erreur publish {topic}: {e}")
 
 
-# ── WebSocket — gestionnaire de connexions ─────────────────────────────────────
+# ── WebSocket - gestionnaire de connexions ─────────────────────────────────────
 class ConnectionManager:
     def __init__(self):
         self._connections: list[WebSocket] = []
@@ -309,7 +309,7 @@ class MuteCmd(BaseModel):
     muted: bool
 
 
-# ── Endpoints REST — commandes ────────────────────────────────────────────────
+# ── Endpoints REST - commandes ────────────────────────────────────────────────
 @app.post("/command/mode")
 async def cmd_mode(cmd: ModeCmd):
     if cmd.mode in ("idle", "manual", "exploration"):

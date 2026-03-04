@@ -25,8 +25,8 @@ control-dashboard/
 ```
 
 **Services Docker :**
-- `mosquitto` — Broker MQTT Eclipse Mosquitto 2.x (port `1883`)
-- `dashboard` — Dashboard FastAPI (port `8000`)
+- `mosquitto` - Broker MQTT Eclipse Mosquitto 2.x (port `1883`)
+- `dashboard` - Dashboard FastAPI (port `8000`)
 
 Les deux services communiquent via un réseau Docker interne (`elio-net`). Le dashboard atteint le broker via le nom de service `mosquitto`, sans passer par l'hôte.
 
@@ -34,14 +34,10 @@ Les deux services communiquent via un réseau Docker interne (`elio-net`). Le da
 
 Avec Streamlit, la page entière se rechargait toutes les secondes (`st.rerun()`), rendant l'interface saccadée et le D-pad inutilisable en maintien. FastAPI + WebSocket envoie uniquement les données changées (push toutes les 300ms) ; le DOM est mis à jour directement en JS sans rechargement. Le D-pad utilise `pointerdown`/`pointerup` avec dead-man's switch côté client.
 
----
-
 ## Prérequis
 
 - Raspberry Pi / DietPi (ou tout Linux) avec accès réseau
 - Docker Engine + plugin Compose v2
-
----
 
 ## Installation sur DietPi
 
@@ -62,11 +58,9 @@ apt-get install -y docker-buildx-plugin
 
 Puis copier les fichiers depuis le Mac :
 ```bash
-# Sur le Mac — la barre oblique finale sur la source est importante (copie le contenu, pas le dossier)
+# Sur le Mac - la barre oblique finale sur la source est importante (copie le contenu, pas le dossier)
 rsync -av /Users/antoninlefevre/Downloads/Projets/Projets-eliobot/server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
 ```
-
----
 
 ## Démarrage rapide
 
@@ -78,7 +72,7 @@ chmod +x setup.sh
 
 Le script build l'image et démarre les services. À la fin il affiche l'IP à configurer sur le robot.
 
-**Configuration robot** (`robot/settings.toml`) :
+**Configuration sur le robot** (`robot/settings.toml`) :
 
 ```toml
 PROGRAM   = "mqtt_dashboard"
@@ -86,15 +80,13 @@ BROKER_IP = "<IP_DU_PI>"
 PORT      = 1883
 ```
 
-**Déploiement du programme** :
+**Déploiement du programme sur le robot** :
 
 ```bash
 ./deploy.sh -p mqtt_dashboard
 ```
 
----
-
-## Commandes utiles
+## Commandes rapides
 
 ```bash
 # Démarrer les services
@@ -116,18 +108,16 @@ docker compose down
 docker compose down -v
 ```
 
----
-
 ## Topics MQTT
 
 ### Robot → Serveur (télémétrie)
 
 | Topic | Payload | Fréquence |
 |---|---|---|
-| `elio/telemetry/battery` | `float` — tension en volts (ex: `3.85`) | 5s |
+| `elio/telemetry/battery` | `float` - tension en volts (ex: `3.85`) | 5s |
 | `elio/telemetry/obstacles` | JSON `{"front": bool, "left": bool, "right": bool, "back": bool}` | 400ms |
 | `elio/telemetry/mode` | `idle` \| `manual` \| `exploration` | Au changement |
-| `elio/telemetry/step` | JSON — étape d'exploration (voir ci-dessous) | Chaque pas |
+| `elio/telemetry/step` | JSON - étape d'exploration (voir ci-dessous) | Chaque pas |
 
 **Format d'un step d'exploration :**
 ```json
@@ -149,8 +139,6 @@ docker compose down -v
 | `elio/command/speed` | `int` 0–100 | Vitesse moteurs |
 | `elio/command/reset_map` | `1` | Réinitialiser la carte exploration |
 
----
-
 ## Dashboard
 
 Accessible sur `http://<IP_DU_PI>:8000`
@@ -162,16 +150,14 @@ Accessible sur `http://<IP_DU_PI>:8000`
 | Tableau de bord | Vue capteurs obstacles (SVG), niveau batterie, état du robot, position |
 | Exploration | Carte Plotly du chemin parcouru, obstacles détectés, journal des déplacements |
 
-**Statut de connexion** — 3 états :
-- 🟢 **Robot actif** — signal MQTT reçu dans les 10 dernières secondes
-- 🟡 **Robot absent** — broker connecté mais aucun signal depuis >10s (robot éteint)
-- 🔴 **Broker déconnecté** — connexion MQTT perdue
+**Statut de connexion** - 3 états :
+- 🟢 **Robot actif** - signal MQTT reçu dans les 10 dernières secondes
+- 🟡 **Robot absent** - broker connecté mais aucun signal depuis >10s (robot éteint)
+- 🔴 **Broker déconnecté** - connexion MQTT perdue
 
 **Mode Manuel** : les boutons D-Pad maintiennent le mouvement tant qu'ils sont pressés (`pointerdown`). Le robot s'arrête automatiquement si aucune commande n'arrive dans les 800ms côté robot (dead-man's switch), et côté client la commande est renvoyée toutes les 500ms.
 
-**Mode Exploration** : le robot navigue en autonomie (règle de la main droite). Le dashboard affiche sa trajectoire et les obstacles détectés en temps réel.
-
----
+**Mode Exploration** : le robot navigue en autonomie. Le dashboard affiche sa trajectoire et les obstacles détectés en temps réel.
 
 ## Développement
 
@@ -186,8 +172,6 @@ Pour modifier les dépendances :
 docker compose up -d --build dashboard
 ```
 
----
-
 ## Notes & problèmes connus
 
 **Plugin buildx manquant**
@@ -200,6 +184,7 @@ Installer avec : `apt-get install -y docker-buildx-plugin`
 **Dossier dupliqué après rsync**
 
 Si `pwd` affiche `.../control-dashboard/control-dashboard`, le rsync a copié le dossier au lieu de son contenu (barre oblique finale manquante sur la source). Fix :
+
 ```bash
 cd ~/eliobot-server/control-dashboard
 mv control-dashboard/* .
@@ -212,4 +197,4 @@ FastAPI + uvicorn fonctionne nativement sur ARM (pas de composant JS compilé). 
 
 **Deux `BROKER_IP` dans `settings.toml`**
 
-CircuitPython prend la première valeur trouvée. Ne pas laisser deux clés identiques — commenter l'entrée inutilisée.
+CircuitPython prend la première valeur trouvée. Ne pas laisser deux clés identiques - commenter l'entrée inutilisée.

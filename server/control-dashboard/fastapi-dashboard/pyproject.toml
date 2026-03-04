@@ -1,7 +1,7 @@
 [project]
 name = "eliobot-fastapi-dashboard"
 version = "0.1.0"
-description = "Eliobot Dashboard — FastAPI + WebSocket + MQTT"
+description = "Eliobot Dashboard - FastAPI + WebSocket + MQTT"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.111.0",

@@ -17,7 +17,7 @@ LED_IDLE    = (50, 50, 50)     # Gris foncé : veille
 LED_MANUAL  = (87, 49, 150)    # Violet : contrôle manuel
 LED_EXPLORE = (0, 180, 80)     # Vert : exploration
 
-# Exploration — vitesse et distance d'un pas
+# Exploration - vitesse et distance d'un pas
 EXPLORE_SPEED = 60
 STEP_CM       = 15
 TURN_DEG      = 90
@@ -73,7 +73,7 @@ def run():
 
         # Mode manuel
         "manual_cmd":   None,    # dernière commande reçue
-        "manual_until": 0,       # validité de la commande (ms) — dead-man's switch
+        "manual_until": 0,       # validité de la commande (ms) - dead-man's switch
         "manual_speed": 70,
 
         # State machine exploration
@@ -89,7 +89,7 @@ def run():
         # Dernière action terminée (pour le log du dashboard)
         "ex_last_action": "start",
 
-        # Télémétrie yeux — mis à jour par set_eyes()
+        # Télémétrie yeux - mis à jour par set_eyes()
         "eyes_pattern": "emotionConfused",
         "eyes_color":   list(LED_IDLE),
 
@@ -134,7 +134,7 @@ def run():
         client.publish("elio/telemetry/mode", state["mode"])
 
     def on_disconnected(client, userdata, rc):
-        print("MQTT déconnecté — arrêt sécurité")
+        print("MQTT déconnecté - arrêt sécurité")
         motors.motor_stop()
 
     def on_message(client, topic, message):
@@ -310,7 +310,7 @@ def run():
 
     def exploration_tick(now: int):
         """
-        State machine non-bloquante — architecture ROS-like.
+        State machine non-bloquante - architecture ROS-like.
 
         Le robot est un pur exécuteur :
           check    → lit les capteurs, publie l'état, passe en waiting

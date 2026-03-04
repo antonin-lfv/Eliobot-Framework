@@ -61,7 +61,7 @@ if [ ! -d "$ROBOT" ]; then
 fi
 
 if [ ! -f "robot/settings.toml" ]; then
-  echo "⚠️  Fichier robot/settings.toml introuvable — création d'une version minimale..."
+  echo "⚠️  Fichier robot/settings.toml introuvable - création d'une version minimale..."
   cat > robot/settings.toml <<'EOF'
 PROGRAM = "animations_fire"
 SSID = ""

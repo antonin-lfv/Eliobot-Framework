@@ -37,7 +37,7 @@ Il y a deux façons d'utiliser ce framework :
 Projets-eliobot/
 ├── deploy.sh                        # Déploiement rsync vers le robot
 ├── robot/                           # Code embarqué sur le robot
-│   ├── main.py                      # Point d'entrée — auto-discovery + safe mode
+│   ├── main.py                      # Point d'entrée - auto-discovery + safe mode
 │   ├── settings.toml                # Config WiFi, programme actif, MQTT  (.gitignore)
 │   ├── config.json                  # Calibration capteurs
 │   └── programs/
@@ -52,7 +52,7 @@ Projets-eliobot/
 │       ├── animations_fire.py       # ─╯
 │       └── mqtt_dashboard.py        # ── Serveur (ROS-like)
 └── server/
-    └── control-dashboard/           # Cerveau — Raspberry Pi / Docker
+    └── control-dashboard/           # Cerveau - Raspberry Pi / Docker
         ├── docker-compose.yml
         ├── mosquitto/
         └── fastapi-dashboard/
@@ -71,13 +71,9 @@ Cloner le projet :
 git clone https://github.com/antonin-lfv/Eliobot-Framework.git
 ```
 
-Et ouvrir un terminal dans le dossier du projet :
+Et ouvrir un terminal dans le dossier du projet.
 
-```bash
-cd Eliobot-Framework
-```
-
-Puis déployer un programme sur le robot (exemple avec `animations_fire`) après l'avoir branché en USB :
+Puis pour déployer un programme sur le robot (exemple avec `animations_fire`) après l'avoir branché en USB :
 
 ```bash
 chmod +x deploy.sh
@@ -94,13 +90,13 @@ chmod +x deploy.sh
 
 | Programme | Description |
 |---|---|
-| `web_server` | Serveur HTTP embarqué — contrôle moteurs, buzzer et LEDs depuis un navigateur sur le réseau local |
+| `web_server` | Serveur HTTP embarqué - contrôle moteurs, buzzer et LEDs depuis un navigateur sur le réseau local |
 | `obstacles` | Évitement d'obstacles autonome en boucle |
 | `line_follower` | Suivi de ligne avec capteurs IR et retour visuel sur la matrice LED |
 | `ir_control` | Contrôle par télécommande infrarouge avec retour émotionnel (yeux + buzzer) |
 | `dance` | Chorégraphie synchronisée moteurs + buzzer + matrice LED (~25s) |
 | `animations_fire` | Animations matricielles en boucle |
-| `safe_mode` | Mode de secours — activé automatiquement si le programme actif crashe |
+| `safe_mode` | Mode de secours - activé automatiquement si le programme actif crashe |
 
 ## Déployer un programme sur le robot
 
@@ -218,7 +214,7 @@ uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 │  3. Attend une commande          │ ←───── │  3. Envoie la commande           │
 │  4. Exécute le mouvement         │        │  4. Met à jour la carte          │
 └──────────────────────────────────┘        └──────────────────────────────────┘
-          Exécuteur pur                         Cerveau — mémoire illimitée,
+          Exécuteur pur                         Cerveau - mémoire illimitée,
           RAM limitée (~8MB)                  algorithmes complexes, dashboard
 ```
 
@@ -238,8 +234,8 @@ chmod +x setup.sh && ./setup.sh
 Dashboard accessible sur `http://<IP_DU_PI>:8000`.
 
 **Services Docker :**
-- `mosquitto` — broker MQTT Eclipse Mosquitto 2.x (port `1883`)
-- `dashboard` — FastAPI + WebSocket (port `8000`)
+- `mosquitto` - broker MQTT Eclipse Mosquitto 2.x (port `1883`)
+- `dashboard` - FastAPI + WebSocket (port `8000`)
 
 ## Configuration du robot
 
@@ -276,8 +272,8 @@ Puis déployez le programme `mqtt_dashboard` sur le robot :
 
 | Mode | Description |
 |---|---|
-| **Manuel** | D-Pad avec dead-man's switch — arrêt si pas de commande dans les 800ms |
-| **Exploration** | Navigation autonome ROS-like — le serveur envoie les commandes une par une |
+| **Manuel** | D-Pad avec dead-man's switch - arrêt si pas de commande dans les 800ms |
+| **Exploration** | Navigation autonome ROS-like - le serveur envoie les commandes une par une |
 | **Idle** | Robot en veille, moteurs coupés (défaut à la connexion) |
 
 ## Topics MQTT
@@ -398,7 +394,7 @@ while True:
 
 # Ressources
 
-- [Eliobot](https://eliobot.com) — site officiel et documentation hardware
-- [CircuitPython](https://circuitpython.org) — runtime embarqué
-- [FastAPI](https://fastapi.tiangolo.com) — backend dashboard
-- [Eclipse Mosquitto](https://mosquitto.org) — broker MQTT
+- [Eliobot](https://eliobot.com) - site officiel et documentation hardware
+- [CircuitPython](https://circuitpython.org) - runtime embarqué
+- [FastAPI](https://fastapi.tiangolo.com) - backend dashboard
+- [Eclipse Mosquitto](https://mosquitto.org) - broker MQTT

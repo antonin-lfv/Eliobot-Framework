@@ -413,7 +413,7 @@
     <svg id="batt-icon" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="1" y="6" width="18" height="12" rx="2"/><path d="M23 13v-2"/>
     </svg>
-    <span id="batt-label">—</span>
+    <span id="batt-label">-</span>
   </div>
 </header>
 
@@ -440,7 +440,7 @@
     <!-- D-Pad -->
     <div class="sidebar-section">
       <div class="sidebar-label">Contrôle</div>
-      <div class="held-indicator" id="held-indicator">—</div>
+      <div class="held-indicator" id="held-indicator">-</div>
       <div class="dpad">
         <div class="dpad-empty"></div>
         <button class="dpad-btn" id="btn-forward" disabled>
@@ -484,12 +484,12 @@
 
     <div class="sidebar-spacer"></div>
 
-    <!-- Info MQTT — fixé en bas -->
+    <!-- Info MQTT - fixé en bas -->
     <div class="sidebar-footer">
       <div class="sidebar-label">Connexion</div>
       <div class="mqtt-info-row">
-        <div class="mqtt-info-code">Broker : <span id="mqtt-broker">—</span></div>
-        <div class="mqtt-info-code">WS : <span id="mqtt-ws">—</span></div>
+        <div class="mqtt-info-code">Broker : <span id="mqtt-broker">-</span></div>
+        <div class="mqtt-info-code">WS : <span id="mqtt-ws">-</span></div>
       </div>
     </div>
 
@@ -543,7 +543,7 @@
           <!-- Batterie -->
           <div style="margin-bottom:14px;">
             <div style="font-size:0.82rem;margin-bottom:5px;color:#334155;">
-              <strong style="color:#1e293b;">Batterie</strong> : <span id="batt-text">—</span>
+              <strong style="color:#1e293b;">Batterie</strong> : <span id="batt-text">-</span>
             </div>
             <div class="batt-bar-wrap">
               <div class="batt-bar" id="batt-bar" style="width:0%;background:#34d399;"></div>
@@ -559,7 +559,7 @@
             </div>
             <div class="metric">
               <div class="label">Connexion</div>
-              <div class="value" id="metric-conn">—</div>
+              <div class="value" id="metric-conn">-</div>
             </div>
           </div>
 
@@ -609,7 +609,7 @@
           </div>
           <div class="eyes-info">
             <div class="eye-color-swatch" id="eye-swatch"></div>
-            <span class="eye-emotion-text" id="eye-emotion">—</span>
+            <span class="eye-emotion-text" id="eye-emotion">-</span>
           </div>
         </div>
 
@@ -644,7 +644,7 @@
             </div>
           </div>
           <p class="helper-text" style="text-align:center; margin-top:4px; font-size:0.72rem;">
-            Valeur brute (ambient − lit) — barre = intensité / 65535
+            Valeur brute (ambient − lit) - barre = intensité / 65535
           </p>
         </div>
 
@@ -714,7 +714,7 @@
 // ════════════════════════════════════════════════════════════════
 
 // Patterns des yeux (128 éléments : 0-63 = œil gauche, 64-127 = œil droit)
-// Copiés depuis elio.py — layout row-major 8×8 par œil
+// Copiés depuis elio.py - layout row-major 8×8 par œil
 const EYE_PATTERNS = {
   arrowUp:        [0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0],
   arrowDown:      [0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0],
@@ -849,7 +849,7 @@ function updateHeader() {
       battIcon.setAttribute('stroke', iconColor);
     }
   } else {
-    battLabel.textContent = '—';
+    battLabel.textContent = '-';
     battIcon.setAttribute('stroke', '#94a3b8');
   }
 
@@ -888,12 +888,12 @@ function updateStatePanel() {
       bar.style.background = '#f59e0b';
     } else {
       const pct = battPct(bv);
-      document.getElementById('batt-text').textContent = pct + '% — ' + bv.toFixed(2) + ' V';
+      document.getElementById('batt-text').textContent = pct + '% - ' + bv.toFixed(2) + ' V';
       bar.style.width = pct + '%';
       bar.style.background = pct < 20 ? '#f87171' : pct < 40 ? '#fb923c' : '#34d399';
     }
   } else {
-    document.getElementById('batt-text').textContent = '—';
+    document.getElementById('batt-text').textContent = '-';
     document.getElementById('batt-bar').style.width = '0%';
   }
 
@@ -923,7 +923,7 @@ function updateExploration() {
   if (alertEl) {
     alertEl.className = exploring ? 'alert success' : 'alert info';
     alertEl.innerHTML = exploring
-      ? 'Mode Exploration actif — le robot navigue en autonomie.'
+      ? 'Mode Exploration actif - le robot navigue en autonomie.'
       : 'Lance l\'exploration pour demarrer la cartographie autonome.';
   }
   const btnEl   = document.getElementById('btn-explore');
@@ -951,7 +951,7 @@ function updateExploration() {
     document.getElementById('stat-steps').textContent = moveCount + ' / ' + steps.length;
     document.getElementById('stat-obs').textContent   = obsCount;
     document.getElementById('stat-dist').textContent  = dist + ' pas';
-    document.getElementById('log-title').textContent  = 'Journal — 10 dernières étapes (total : ' + steps.length + ')';
+    document.getElementById('log-title').textContent  = 'Journal - 10 dernières étapes (total : ' + steps.length + ')';
 
     const last30 = steps.slice(-10).reverse();
     document.getElementById('log-body').innerHTML = last30.map(s => {
@@ -999,7 +999,7 @@ function updateEyes() {
 
   document.getElementById('eye-swatch').style.background = colorOn;
   document.getElementById('eye-emotion').textContent =
-    EMOTION_LABELS[eyes.pattern] || eyes.pattern || '—';
+    EMOTION_LABELS[eyes.pattern] || eyes.pattern || '-';
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1046,7 +1046,7 @@ function updateMap(steps) {
   const cur = steps.length > 0 ? steps[steps.length - 1] : null;
   const traces = [];
 
-  // Seuls les pas "moved_forward" changent la position — on trace uniquement ceux-là
+  // Seuls les pas "moved_forward" changent la position - on trace uniquement ceux-là
   const moves = steps.filter(s => s.action === 'moved_forward' || s.action === 'start');
 
   if (moves.length > 0) {
@@ -1114,7 +1114,7 @@ function dpadClear() {
   if (holdInterval) { clearInterval(holdInterval); holdInterval = null; }
   heldDir = null;
   const el = document.getElementById('held-indicator');
-  if (el) el.textContent = '—';
+  if (el) el.textContent = '-';
 }
 
 // ════════════════════════════════════════════════════════════════
