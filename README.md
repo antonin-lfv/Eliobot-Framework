@@ -30,7 +30,6 @@ Il y a deux façons d'utiliser ce framework :
 | **Programmes** | `web_server`, `obstacles`, `line_follower`, `ir_control`, `dance`, `animations_fire` | `mqtt_dashboard` |
 | **Cas d'usage** | Comportements autonomes embarqués | Dashboard temps réel, exploration cartographique |
 
----
 
 # Structure du projet
 
@@ -62,10 +61,28 @@ Projets-eliobot/
                 └── index.html       # Dashboard SPA
 ```
 
-**Mécanisme auto-discovery :** `main.py` lit `PROGRAM` dans `settings.toml` → `registry.py` charge le module dynamiquement → si crash → `safe_mode.py` prend le relais automatiquement.
+**Mécanisme auto-discovery :** `main.py` lit `PROGRAM` dans `settings.toml` et `registry.py` charge le module dynamiquement. Si le programme crash alors le programme `safe_mode.py` prend le relais automatiquement.
 
----
----
+# Quick start
+
+Cloner le projet :
+
+```bash
+git clone https://github.com/antonin-lfv/Eliobot-Framework.git
+```
+
+Et ouvrir un terminal dans le dossier du projet :
+
+```bash
+cd Eliobot-Framework
+```
+
+Puis déployer un programme sur le robot (exemple avec `animations_fire`) après l'avoir branché en USB :
+
+```bash
+chmod +x deploy.sh
+./deploy.sh -p animations_fire
+```
 
 # 1. Utilisation On Edge
 
@@ -85,22 +102,49 @@ Projets-eliobot/
 | `animations_fire` | Animations matricielles en boucle |
 | `safe_mode` | Mode de secours — activé automatiquement si le programme actif crashe |
 
-## Déployer un programme
+## Déployer un programme sur le robot
+
+Vous pouvez soit créer directement le fichier `settings.toml` dans le dossier `robot/`, soit utiliser la commande `./deploy.sh` pour le créer lors du déploiement en restant dans le terminal.
+
+Il faudra penser à ajouter les droits d'exécution au script `deploy.sh` avant de pouvoir l'utiliser :
+
+```bash
+chmod +x deploy.sh
+```
+
+Le fichier `settings.toml` doit contenir au minimum le nom du programme à exécuter, ainsi que les informations de connexion WiFi. Par exemple :
 
 ```toml
-# robot/settings.toml
-PROGRAM  = "obstacles"
-SSID     = "VotreReseau"
+PROGRAM = "obstacles"
+SSID = "VotreReseau"
 PASSWORD = "VotreMotDePasse"
 ```
 
+Pour déployer le programme défini dans `settings.toml` :
+
 ```bash
-./deploy.sh                    # Déploie le programme défini dans settings.toml
-./deploy.sh -p line_follower   # Override du programme au vol
+./deploy.sh    
+```
+
+Pour déployer un programme spécifique sans modifier `settings.toml` :
+
+```bash
+./deploy.sh -p line_follower
+```
+
+Pour faire une simulation sans copier les fichiers sur le robot (dry-run) :
+
+```bash
 ./deploy.sh --dry-run          # Simulation sans copie
 ```
 
-## Créer un programme
+Pour de l'aide :
+
+```bash
+./deploy.sh --help
+```
+
+## Créer un nouveau programme
 
 Créer un fichier dans `robot/programs/` avec une fonction `run()`. C'est tout.
 
@@ -147,12 +191,12 @@ def run():
 
 ## Debug REPL USB
 
+Pour accéder à une console interactive (REPL) via USB et débugger le robot en temps réel :
+
 ```bash
 uv run mpremote connect port:/dev/cu.usbmodem* repl   # macOS
 uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 ```
-
----
 
 # 2. Utilisation depuis un serveur
 
@@ -181,10 +225,10 @@ uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 ## Installation du serveur
 
 ```bash
-# 1. Copier sur le Raspberry Pi
+# On copie sur le Raspberry Pi (à lancer depuis votre machine locale)
 rsync -av server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
 
-# 2. Démarrer les services Docker
+# Démarrage du serveur depuis le Raspberry Pi
 cd ~/eliobot-server/control-dashboard
 chmod +x setup.sh && ./setup.sh
 ```
@@ -197,14 +241,17 @@ Dashboard accessible sur `http://<IP_DU_PI>:8000`.
 
 ## Configuration du robot
 
+Dans le fichier `settings.toml` du dossier `robot`, indiquez le programme `mqtt_dashboard` ainsi que les informations de connexion WiFi et l'adresse IP du broker MQTT (le Raspberry Pi). Par exemple :
+
 ```toml
-# robot/settings.toml
 PROGRAM   = "mqtt_dashboard"
 BROKER_IP = "<IP_DU_PI>"
 PORT      = 1883
 SSID      = "VotreReseau"
 PASSWORD  = "VotreMotDePasse"
 ```
+
+Puis déployez le programme `mqtt_dashboard` sur le robot :
 
 ```bash
 ./deploy.sh -p mqtt_dashboard
@@ -346,8 +393,6 @@ while True:
 
     sleep_ms(20)
 ```
-
----
 
 # Ressources
 

@@ -61,8 +61,14 @@ if [ ! -d "$ROBOT" ]; then
 fi
 
 if [ ! -f "robot/settings.toml" ]; then
-  echo "❌ Fichier introuvable: robot/settings.toml"
-  exit 1
+  echo "⚠️  Fichier robot/settings.toml introuvable — création d'une version minimale..."
+  cat > robot/settings.toml <<'EOF'
+PROGRAM = "animations_fire"
+SSID = ""
+PASSWORD = ""
+EOF
+  echo "📝 robot/settings.toml créé avec PROGRAM=\"animations_fire\"."
+  echo "➡️  Pense à renseigner SSID et PASSWORD avant de déployer si tu veux le WiFi."
 fi
 
 # -------- Update PROGRAM in settings.toml if requested --------
