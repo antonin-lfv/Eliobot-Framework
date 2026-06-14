@@ -14,5 +14,6 @@ wheels/
 .env
 robot/settings.toml
 
-# Claude context
+# Agents context
 CLAUDE.md
+AGENTS.md
