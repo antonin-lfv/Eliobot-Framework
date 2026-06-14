@@ -399,13 +399,328 @@
     .line-bar-fill.active { background: #1e293b; }
     .line-value { font-size: 0.55rem; color: #64748b; font-variant-numeric: tabular-nums; text-align: center; min-width: 34px; }
     .line-sensor-label { font-size: 0.6rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.06em; text-align: center; }
+
+    /* ── Theme sombre Eliobot ─────────────────────────────── */
+    :root {
+      --accent: #574F96;
+      --accent-strong: #7f77cf;
+      --bg: #080910;
+      --panel: #11131c;
+      --panel-2: #171a25;
+      --panel-3: #1d2130;
+      --line: #2a2e3d;
+      --line-strong: #393e53;
+      --text: #ffffff;
+      --text-soft: #d8dbea;
+      --text-muted: #9ca3b8;
+      --success: #35d39b;
+      --warning: #f2b84b;
+      --danger: #ff6b6b;
+      --blue: #6ea8ff;
+    }
+
+    * { letter-spacing: 0 !important; }
+
+    body {
+      background: var(--bg);
+      background-image: none;
+      color: var(--text);
+    }
+
+    ::-webkit-scrollbar-thumb { background: #34394b; border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a5068; }
+
+    .header {
+      background: #0d0f16;
+      border-bottom: 1px solid var(--line);
+      box-shadow: none;
+      padding: 13px 24px;
+    }
+    .header-title {
+      color: var(--text);
+      font-size: 1.08rem;
+      font-weight: 700;
+    }
+    .header-title::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-right: 10px;
+      border-radius: 2px;
+      background: var(--accent);
+      vertical-align: 1px;
+    }
+    .header-mode,
+    .last-signal,
+    .battery-display { color: var(--text-muted); }
+    .header-mode strong,
+    #batt-label { color: var(--text); }
+
+    .status-badge {
+      border-radius: 8px;
+      padding: 5px 11px;
+      font-size: 0.78rem;
+    }
+    .status-badge.connected {
+      background: rgba(53, 211, 155, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(53, 211, 155, 0.35);
+    }
+    .status-badge.disconnected {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--danger);
+      border: 1px solid rgba(255, 107, 107, 0.32);
+    }
+    .status-badge.warning {
+      background: rgba(242, 184, 75, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(242, 184, 75, 0.34);
+    }
+
+    .layout { background: var(--bg); }
+
+    .sidebar {
+      background: #0d0f16;
+      border-right: 1px solid var(--line);
+      box-shadow: none;
+      padding: 18px 14px;
+    }
+    .sidebar-label {
+      color: var(--accent-strong);
+      font-size: 0.68rem;
+      font-weight: 700;
+    }
+    .divider {
+      background: var(--line);
+      margin: 12px 0;
+    }
+    .sidebar-footer {
+      border-top: 1px solid var(--line);
+    }
+    .mqtt-info-code,
+    .mqtt-info-row span,
+    .helper-text,
+    .eye-label,
+    .eye-emotion-text,
+    .line-value,
+    .line-sensor-label,
+    .speed-row,
+    .page-credit {
+      color: var(--text-muted);
+    }
+    .page-credit a { color: var(--accent-strong); }
+    .page-credit a:hover { color: var(--text); }
+
+    .btn {
+      border-radius: 8px;
+      min-height: 36px;
+    }
+    .btn-secondary {
+      background: var(--panel-2);
+      color: var(--text-soft);
+      border: 1px solid var(--line-strong);
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      background: var(--panel-3);
+      border-color: var(--accent);
+      transform: none;
+    }
+    .btn-secondary:active { transform: translateY(1px); }
+    .btn-secondary.muted {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--danger);
+      border-color: rgba(255, 107, 107, 0.36);
+    }
+
+    .btn-explore {
+      background: var(--accent);
+      color: var(--text);
+      border: 1px solid var(--accent-strong);
+      box-shadow: none;
+    }
+    .btn-explore:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+      transform: none;
+    }
+    .btn-explore.exploring {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--danger);
+      border-color: rgba(255, 107, 107, 0.36);
+    }
+
+    input[type=range] { accent-color: var(--accent); }
+    input[type=range]:disabled { opacity: 0.42; cursor: not-allowed; }
+
+    .dpad { gap: 7px; }
+    .dpad-btn {
+      height: 42px;
+      border-radius: 8px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-strong);
+      color: var(--text);
+      box-shadow: none;
+    }
+    .dpad-btn:hover:not(:disabled) {
+      background: var(--accent);
+      border-color: var(--accent-strong);
+      box-shadow: none;
+      transform: none;
+    }
+    .dpad-btn:active:not(:disabled) {
+      transform: translateY(1px);
+      background: var(--accent-strong);
+    }
+    .dpad-btn:disabled {
+      opacity: 0.28;
+      background: #11131a;
+    }
+    .held-indicator {
+      color: var(--accent-strong);
+      min-height: 20px;
+    }
+
+    .tabs {
+      background: #0d0f16;
+      border-bottom: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .tab-btn {
+      color: var(--text-muted);
+      padding: 13px 22px;
+    }
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+      background: rgba(87, 79, 150, 0.14);
+    }
+    .tab-btn:hover:not(.active) {
+      color: var(--text-soft);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-content { padding: 18px; background: var(--bg); }
+    #explore-map {
+      height: 52dvh;
+      min-height: 360px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: none;
+      padding: 16px;
+    }
+    .card::before { display: none; }
+    .card h4 {
+      color: var(--text);
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+    .card [style] { color: var(--text-soft) !important; }
+    .card strong { color: var(--text) !important; }
+
+    .metrics-grid { gap: 10px; }
+    .metric {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+    .metric .label {
+      color: var(--text-muted);
+      font-size: 0.66rem;
+    }
+    .metric .value {
+      color: var(--text);
+      font-size: 1.18rem;
+    }
+
+    .batt-bar-wrap {
+      background: #262b39;
+      border-radius: 4px;
+      height: 8px;
+    }
+    .batt-bar { border-radius: 4px; }
+
+    .alert {
+      border-radius: 8px;
+      backdrop-filter: none;
+    }
+    .alert.info {
+      background: rgba(87, 79, 150, 0.16);
+      color: var(--text-soft);
+      border-color: rgba(87, 79, 150, 0.5);
+    }
+    .alert.success {
+      background: rgba(53, 211, 155, 0.1);
+      color: var(--success);
+      border-color: rgba(53, 211, 155, 0.35);
+    }
+
+    .log-table th {
+      background: #0d0f16;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--line);
+    }
+    .log-table td {
+      color: var(--text-soft);
+      border-bottom: 1px solid var(--line);
+    }
+    .log-table tbody tr:hover td { background: rgba(87, 79, 150, 0.12); }
+
+    .eye-grid {
+      background: #0b0d14;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .eye-pixel { background: #222637; }
+    .eye-color-swatch {
+      border: 1px solid var(--line-strong);
+      border-radius: 4px;
+    }
+
+    .line-bar-wrap {
+      background: #0b0d14;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: none;
+    }
+    .line-bar-fill { background: var(--text-muted); }
+    .line-bar-fill.active { background: var(--accent-strong); }
+
+    #speed-value { color: var(--accent-strong) !important; }
+
+    @media (max-width: 760px) {
+      body { overflow: auto; height: auto; min-height: 100dvh; }
+      .header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+      }
+      .battery-display { margin-left: 0; }
+      .layout { flex-direction: column; overflow: visible; }
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+      .main { overflow: visible; }
+      .tab-content { overflow: visible; }
+      .explore-actions { flex-direction: column; }
+      .stats-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
 <!-- ══ HEADER ══════════════════════════════════════════════════════════════ -->
 <header class="header">
-  <div class="header-title">🤖 Eliobot</div>
+  <div class="header-title">Eliobot Dashboard</div>
   <div class="header-mode" id="header-mode">Mode : <strong>Manuel</strong></div>
   <span class="status-badge disconnected" id="status-badge">Déconnecté</span>
   <span class="last-signal" id="last-signal">Aucun signal</span>
@@ -488,7 +803,8 @@
     <div class="sidebar-footer">
       <div class="sidebar-label">Connexion</div>
       <div class="mqtt-info-row">
-        <div class="mqtt-info-code">Broker : <span id="mqtt-broker">-</span></div>
+        <div class="mqtt-info-code">Web : <span id="dashboard-host">-</span></div>
+        <div class="mqtt-info-code">MQTT robot : <span id="mqtt-robot-host">-</span></div>
         <div class="mqtt-info-code">WS : <span id="mqtt-ws">-</span></div>
       </div>
     </div>
@@ -644,20 +960,20 @@
             </div>
           </div>
           <p class="helper-text" style="text-align:center; margin-top:4px; font-size:0.72rem;">
-            Valeur brute (ambient − lit) - barre = intensité / 65535
+            Plus la barre est haute, plus le capteur détecte une ligne sombre.
           </p>
         </div>
 
       </div><!-- /dashboard-grid -->
 
-      <div class="page-credit">Made with &#10084; by <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> &nbsp;·&nbsp; v1.3</div>
+      <div class="page-credit">Eliobot Framework · <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> · v1.3</div>
     </div><!-- /tab-board -->
 
     <!-- ── Tab 2 : Exploration ───────────────────────────────────────────── -->
     <div class="tab-content" id="tab-explore">
 
       <div class="alert info" id="explore-alert">
-        Lance l'exploration pour demarrer la cartographie autonome.
+        Lance l'exploration pour démarrer la cartographie autonome.
       </div>
 
       <div class="card">
@@ -675,7 +991,7 @@
               <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
               <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
             </svg>
-            Reinitialiser la carte
+            Réinitialiser la carte
           </button>
         </div>
       </div>
@@ -701,7 +1017,7 @@
         </div>
       </div>
 
-      <div class="page-credit">Made with &#10084; by <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> &nbsp;·&nbsp; v1.3</div>
+      <div class="page-credit">Eliobot Framework · <a href="https://github.com/antonin-lfv" target="_blank" rel="noopener">Antonin</a> · v1.3</div>
 
     </div><!-- /tab-explore -->
 
@@ -924,7 +1240,7 @@ function updateExploration() {
     alertEl.className = exploring ? 'alert success' : 'alert info';
     alertEl.innerHTML = exploring
       ? 'Mode Exploration actif - le robot navigue en autonomie.'
-      : 'Lance l\'exploration pour demarrer la cartographie autonome.';
+      : 'Lance l\'exploration pour démarrer la cartographie autonome.';
   }
   const btnEl   = document.getElementById('btn-explore');
   const labelEl = document.getElementById('btn-explore-label');
@@ -934,7 +1250,7 @@ function updateExploration() {
       ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
       : '<polygon points="5 3 19 12 5 21 5 3"/>';
   }
-  if (labelEl) labelEl.textContent = exploring ? 'Arreter l\'exploration' : 'Lancer l\'exploration';
+  if (labelEl) labelEl.textContent = exploring ? 'Arrêter l\'exploration' : 'Lancer l\'exploration';
 
   updateMap(steps);
 
@@ -961,9 +1277,9 @@ function updateExploration() {
         <td>(${s.x??0}, ${s.y??0})</td>
         <td>${HEADING_ARROW[h]} ${HEADING_LABEL[h]}</td>
         <td>${ACTION_LABELS[s.action] || s.action || ''}</td>
-        <td>${s.front ? '🔴':'🟢'}</td>
-        <td>${s.left  ? '🔴':'🟢'}</td>
-        <td>${s.right ? '🔴':'🟢'}</td>
+        <td>${s.front ? 'Bloqué':'Libre'}</td>
+        <td>${s.left  ? 'Bloqué':'Libre'}</td>
+        <td>${s.right ? 'Bloqué':'Libre'}</td>
       </tr>`;
     }).join('');
   }
@@ -1025,19 +1341,19 @@ function updateLines() {
 // ════════════════════════════════════════════════════════════════
 const MAP_LAYOUT = {
   xaxis: {
-    showgrid:true, gridcolor:'rgba(99,102,241,0.1)', zeroline:true,
-    zerolinewidth:2, zerolinecolor:'rgba(99,102,241,0.2)',
-    title:{text:'X (pas)', font:{color:'#94a3b8'}}, tickfont:{color:'#94a3b8'},
+    showgrid:true, gridcolor:'rgba(255,255,255,0.08)', zeroline:true,
+    zerolinewidth:2, zerolinecolor:'rgba(87,79,150,0.55)',
+    title:{text:'X (pas)', font:{color:'#9ca3b8'}}, tickfont:{color:'#9ca3b8'},
   },
   yaxis: {
-    showgrid:true, gridcolor:'rgba(99,102,241,0.1)', zeroline:true,
-    zerolinewidth:2, zerolinecolor:'rgba(99,102,241,0.2)',
+    showgrid:true, gridcolor:'rgba(255,255,255,0.08)', zeroline:true,
+    zerolinewidth:2, zerolinecolor:'rgba(87,79,150,0.55)',
     scaleanchor:'x',
-    title:{text:'Y (pas)', font:{color:'#94a3b8'}}, tickfont:{color:'#94a3b8'},
+    title:{text:'Y (pas)', font:{color:'#9ca3b8'}}, tickfont:{color:'#9ca3b8'},
   },
-  legend: { orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1, font:{color:'#64748b'}, bgcolor:'rgba(0,0,0,0)' },
+  legend: { orientation:'h', yanchor:'bottom', y:1.02, xanchor:'right', x:1, font:{color:'#d8dbea'}, bgcolor:'rgba(0,0,0,0)' },
   margin: {l:50, r:10, t:30, b:40},
-  plot_bgcolor:'rgba(255,255,255,0.5)',
+  plot_bgcolor:'#0b0d14',
   paper_bgcolor:'rgba(0,0,0,0)',
 };
 
@@ -1053,8 +1369,8 @@ function updateMap(steps) {
     traces.push({
       x: moves.map(s => s.x), y: moves.map(s => s.y),
       mode: 'lines+markers',
-      line: {color:'#3b82f6', width:2},
-      marker: {size:5, color:'#3b82f6'},
+      line: {color:'#7f77cf', width:2},
+      marker: {size:5, color:'#7f77cf'},
       name: 'Chemin',
     });
 
@@ -1079,15 +1395,15 @@ function updateMap(steps) {
     const h = cur.heading ?? 0;
     traces.push({
       x: [cur.x], y: [cur.y], mode: 'markers+text',
-      marker: {size:18, color:'#2563eb', symbol:'circle', line:{color:'white', width:2}},
+      marker: {size:18, color:'#574F96', symbol:'circle', line:{color:'#ffffff', width:2}},
       text: [HEADING_ARROW[h]], textposition: 'middle center',
-      textfont: {size:14, color:'white'},
+      textfont: {size:14, color:'#ffffff'},
       name: 'Eliobot',
     });
   } else {
     traces.push({
       x: [0], y: [0], mode: 'markers',
-      marker: {size:14, color:'#2563eb', symbol:'circle'},
+      marker: {size:14, color:'#574F96', symbol:'circle'},
       name: 'Eliobot (départ)',
     });
   }
@@ -1206,12 +1522,16 @@ initEyeGrids();
 
 Plotly.newPlot('explore-map', [{
   x:[0], y:[0], mode:'markers',
-  marker:{size:14, color:'#2563eb', symbol:'circle'},
+  marker:{size:14, color:'#574F96', symbol:'circle'},
   name:'Eliobot (départ)',
 }], MAP_LAYOUT, {responsive:true, displayModeBar:false});
 
-document.getElementById('mqtt-broker').textContent = location.hostname;
-document.getElementById('mqtt-ws').textContent     = location.host + '/ws';
+const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(location.hostname);
+document.getElementById('dashboard-host').textContent = location.host;
+document.getElementById('mqtt-robot-host').textContent = isLocalHost
+  ? 'IP WiFi du PC:1883'
+  : location.hostname + ':1883';
+document.getElementById('mqtt-ws').textContent = location.host + '/ws';
 
 connectWS();
 </script>

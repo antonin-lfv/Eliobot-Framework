@@ -194,6 +194,8 @@ uv run mpremote connect port:/dev/cu.usbmodem* repl   # macOS
 uv run mpremote connect port:/dev/ttyACM0 repl         # Linux
 ```
 
+Pour trouver le nom du robot, on peut taper : `ls /dev/cu.usbmodem*`
+
 <br>
 
 # 2. Utilisation depuis un serveur
@@ -237,9 +239,49 @@ Dashboard accessible sur `http://<IP_DU_PI>:8000`.
 - `mosquitto` - broker MQTT Eclipse Mosquitto 2.x (port `1883`)
 - `dashboard` - FastAPI + WebSocket (port `8000`)
 
+## Lancer le serveur en local sur son ordinateur
+
+Pour tester le dashboard sans Raspberry Pi, vous pouvez lancer les services directement depuis votre ordinateur avec Docker :
+
+```bash
+cd server/control-dashboard
+docker compose up -d --build
+```
+
+Le dashboard est alors accessible sur `http://localhost:8000`, et le broker MQTT écoute sur le port `1883` de votre ordinateur.
+
+Si le robot doit se connecter à ce serveur local, il ne faut pas mettre `localhost` dans `robot/settings.toml`, car `localhost` désignerait le robot lui-même. Il faut utiliser l'adresse IP de votre ordinateur sur le WiFi :
+
+```bash
+# macOS, WiFi
+ipconfig getifaddr en0
+
+# Linux
+hostname -I
+```
+
+Puis configurer le robot avec cette IP :
+
+```toml
+PROGRAM   = "mqtt_dashboard"
+BROKER_IP = "<IP_DE_VOTRE_ORDINATEUR>"
+PORT      = 1883
+SSID      = "VotreReseau"
+PASSWORD  = "VotreMotDePasse"
+```
+
+Dans le dashboard, il est normal de voir `localhost` si vous l'ouvrez depuis le même ordinateur. Ce n'est que l'adresse web du dashboard dans votre navigateur. Pour le robot, seule la valeur `BROKER_IP` compte, et elle doit être l'IP WiFi de l'ordinateur.
+
+Pour arrêter le serveur local :
+
+```bash
+cd server/control-dashboard
+docker compose down
+```
+
 ## Configuration du robot
 
-Dans le fichier `settings.toml` du dossier `robot`, indiquez le programme `mqtt_dashboard` ainsi que les informations de connexion WiFi et l'adresse IP du broker MQTT (le Raspberry Pi). Par exemple :
+Dans le fichier `settings.toml` du dossier `robot`, indiquez le programme `mqtt_dashboard` ainsi que les informations de connexion WiFi et l'adresse IP du broker MQTT (Raspberry Pi ou ordinateur local). Par exemple :
 
 ```toml
 PROGRAM   = "mqtt_dashboard"

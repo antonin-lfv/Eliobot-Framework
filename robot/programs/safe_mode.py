@@ -1,6 +1,6 @@
 import time
 
-PROGRAM_NAME = "safe"
+PROGRAM_NAME = "safe_mode"
 
 
 def run():
