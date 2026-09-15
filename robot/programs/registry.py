@@ -23,44 +23,56 @@ def _default_program_name_from_file(filename):
     return filename[:-3]
 
 
+def _lazy_runner(module_name):
+    def run():
+        mod = __import__(module_name, None, None, ["*"])
+        run_func = getattr(mod, "run", None)
+        if not callable(run_func):
+            raise ValueError("Programme sans fonction run(): " + module_name)
+        return run_func()
+    return run
+
+
+def _declared_name(path, default_name):
+    """Lit un alias littéral sans importer ni exécuter le programme."""
+    try:
+        with open(path) as source:
+            for line in source:
+                if not line.startswith("PROGRAM_NAME"):
+                    continue
+                key, separator, value = line.partition("=")
+                if separator and key.strip() == "PROGRAM_NAME":
+                    value = value.strip()
+                    if value and value[0] in ("'", '"'):
+                        end = value.find(value[0], 1)
+                        if end > 1:
+                            return value[1:end]
+    except OSError as e:
+        print("Program discovery:", e)
+    return default_name
+
+
 def discover_programs():
-    """
-    Retourne un dict: program_name -> fonction run()
+    """Retourne des lanceurs ; seul le programme choisi sera importé.
+
+    PROGRAM_NAME peut être un alias littéral déclaré au niveau du module.
+    Sans alias, le nom du fichier sert de nom de programme.
     """
     programs = {}
-
-    # CircuitPython-friendly directory listing
+    directory = "programs"
     try:
-        filenames = os.listdir("programs")
+        filenames = os.listdir(directory)
     except OSError:
-        filenames = os.listdir("/programs")
+        directory = "/programs"
+        filenames = os.listdir(directory)
 
-    for fn in filenames:
+    for fn in sorted(filenames):
         if not _is_program_file(fn):
             continue
-
-        module_name = _module_name_from_file(fn)
-        default_name = _default_program_name_from_file(fn)
-
-        try:
-            mod = __import__(module_name, None, None, ["*"])
-        except Exception as e:
-            print(f"Program discovery: failed importing {module_name}: {e}")
+        name = _declared_name(directory + "/" + fn,
+                              _default_program_name_from_file(fn))
+        if name in programs:
+            print("Program discovery: nom dupliqué ignoré:", name, fn)
             continue
-
-        # Cherche une fonction run()
-        if not hasattr(mod, "run"):
-            continue
-
-        run_func = getattr(mod, "run")
-        if not callable(run_func):
-            continue
-
-        # Nom du programme: PROGRAM_NAME si defini, sinon nom du fichier
-        name = getattr(mod, "PROGRAM_NAME", default_name)
-        if not isinstance(name, str):
-            name = default_name
-
-        programs[name] = run_func
-
+        programs[name] = _lazy_runner(_module_name_from_file(fn))
     return programs

@@ -1,4 +1,5 @@
 import time
+import json
 import board
 import pwmio
 import analogio
@@ -11,15 +12,37 @@ from elio import Motors, Buzzer, ObstacleSensor, EyesMatrix, LineSensor, IRRemot
 # ============================================================
 # SETUP HARDWARE
 # ============================================================
+_motor_outputs = []
+_motors = None
+
+
+def emergency_stop():
+    """Freine les sorties déjà initialisées, même après un setup incomplet."""
+    for output in _motor_outputs:
+        try:
+            output.duty_cycle = 65535
+        except Exception as e:
+            print("Impossible d'arrêter une sortie moteur:", e)
+
 
 def setup_motors():
-    """Initialise et retourne les moteurs."""
-    AIN1 = pwmio.PWMOut(board.IO36)
-    AIN2 = pwmio.PWMOut(board.IO38)
-    BIN1 = pwmio.PWMOut(board.IO35)
-    BIN2 = pwmio.PWMOut(board.IO37)
-    vBatt_pin = analogio.AnalogIn(board.BATTERY)
-    return Motors(AIN1, AIN2, BIN1, BIN2, vBatt_pin)
+    """Initialise une seule instance, conservée pour l'arrêt d'urgence."""
+    global _motors
+    if _motors is None:
+        if _motor_outputs:
+            emergency_stop()
+            raise RuntimeError("Initialisation moteur incomplète : redémarrer le robot")
+        try:
+            for pin in (board.IO36, board.IO38, board.IO35, board.IO37):
+                _motor_outputs.append(pwmio.PWMOut(pin))
+            vBatt_pin = analogio.AnalogIn(board.BATTERY)
+            _motors = Motors(_motor_outputs[0], _motor_outputs[1],
+                             _motor_outputs[2], _motor_outputs[3], vBatt_pin)
+            emergency_stop()
+        except BaseException:
+            emergency_stop()
+            raise
+    return _motors
 
 
 def setup_buzzer():
@@ -36,7 +59,22 @@ def setup_obstacle_sensors():
     """Initialise et retourne les capteurs d'obstacles."""
     pins = [board.IO4, board.IO5, board.IO6, board.IO7]
     obstacleInput = [analogio.AnalogIn(pin) for pin in pins]
-    return ObstacleSensor(obstacleInput)
+    try:
+        with open('/config.json') as stream:
+            calibration = json.load(stream)
+            if not isinstance(calibration, dict):
+                raise ValueError('Le fichier doit contenir un objet JSON')
+            thresholds = calibration.get('obstacle_thresholds')
+    except OSError:
+        thresholds = None
+    except ValueError as exc:
+        print("Calibration obstacles illisible :", exc)
+        thresholds = None
+    try:
+        return ObstacleSensor(obstacleInput, thresholds)
+    except ValueError as exc:
+        print("Calibration obstacles invalide, seuils par défaut :", exc)
+        return ObstacleSensor(obstacleInput)
     # 0: avant gauche, 1: avant, 2: avant droit, 3: arriere
 
 

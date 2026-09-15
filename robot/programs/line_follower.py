@@ -24,9 +24,9 @@ def run():
     try:
         with open("config.json") as f:
             config = json.load(f)
-        threshold = config.get("line_threshold", 75000)
+        threshold = config.get("line_threshold", 30000)
     except Exception:
-        threshold = 75000
+        threshold = 30000
     print(f"Threshold: {threshold}")
 
     buzzer.sound_startup()

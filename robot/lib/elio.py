@@ -44,7 +44,7 @@ class Motors:
         self.BIN2 = BIN2
         self.vBatt_pin = vBatt_pin
 
-    def repetition_per_second(self):
+    def repetition_per_second(self, speed=100):
         """
         Calculate the number of repetitions per second the motor can perform.
 
@@ -55,7 +55,8 @@ class Motors:
         if vBatt < 2:
             vBatt = 2
         rpm = 20.3 * vBatt
-        rps = rpm / 60
+        # Estimation linéaire selon le PWM ; à calibrer sur le sol utilisé.
+        rps = rpm / 60 * (self.set_speed(speed) / 65535)
         return rps
 
     @staticmethod
@@ -71,8 +72,10 @@ class Motors:
         """
         if speed_value > 100:
             speed_value = 100
+        elif speed_value <= 0:
+            return 0
         elif speed_value < 15:
-            speed_value += 15
+            speed_value = 15
         pwm_value = int((speed_value / 100) * 65535)
         return pwm_value
 
@@ -541,12 +544,23 @@ class Buzzer:
 
 
 class ObstacleSensor:
-    def __init__(self, obstacleInput):
+    def __init__(self, obstacleInput, thresholds=None):
         """
         Initialize the obstacle sensor.
         :param obstacleInput: The obstacle sensor initialized with analogio.AnalogIn
         """
         self.obstacleInput = obstacleInput
+        if thresholds is None:
+            thresholds = [10000] * len(obstacleInput)
+        if (not isinstance(thresholds, (list, tuple))
+                or len(thresholds) != len(obstacleInput)
+                or any(type(v) is not int or not 1 <= v <= 65535 for v in thresholds)):
+            raise ValueError("Un seuil entier entre 1 et 65535 est requis par capteur")
+        self.thresholds = list(thresholds)
+
+    def get_raw(self, obstacle_pos):
+        """Valeur brute du capteur, avant comparaison au seuil logiciel."""
+        return self.obstacleInput[obstacle_pos].value
 
     def get_obstacle(self, obstacle_pos):
         """
@@ -558,8 +572,7 @@ class ObstacleSensor:
         :return
             bool: True if an obstacle is detected, False otherwise.
         """
-        value = self.obstacleInput[obstacle_pos].value
-        return value < 10000
+        return self.get_raw(obstacle_pos) < self.thresholds[obstacle_pos]
 
 
 class LineSensor:
@@ -706,9 +719,12 @@ class LineSensor:
         :arg
             threshold (float): The calculated threshold value for line detection.
         """
-        calibration_data = {
-            'line_threshold': threshold
-        }
+        try:
+            with open('config.json') as file:
+                calibration_data = json.load(file)
+        except (OSError, ValueError):
+            calibration_data = {}
+        calibration_data['line_threshold'] = threshold
         with open('config.json', 'w') as file:
             json.dump(calibration_data, file)
 

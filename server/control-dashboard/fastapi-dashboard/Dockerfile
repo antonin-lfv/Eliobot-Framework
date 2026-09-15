@@ -7,11 +7,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Installer les dépendances en premier (couche cachée)
 COPY pyproject.toml ./
-RUN uv pip install --system \
-    "fastapi>=0.111.0" \
-    "uvicorn[standard]>=0.29.0" \
-    "paho-mqtt>=2.1.0" \
-    "aiofiles>=23.0.0"
+RUN uv pip install --system -r pyproject.toml
 
 # Copier le code source
 COPY . .

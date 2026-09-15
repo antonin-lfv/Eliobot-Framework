@@ -1,1 +1,6 @@
-{"line_threshold": 57000, "turn_factor": 1.0}
+{
+  "line_threshold": 57000,
+  "turn_factor": 1.0,
+  "move_factor": 1.0,
+  "obstacle_thresholds": [10000, 10000, 10000, 10000]
+}

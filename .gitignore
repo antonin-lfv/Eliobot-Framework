@@ -17,3 +17,5 @@ robot/settings.toml
 # Agents context
 CLAUDE.md
 AGENTS.md
+# Cache anatomique externe, préparé depuis Pytorch_fly
+server/control-dashboard/fly-data/

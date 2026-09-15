@@ -1,7 +1,15 @@
 import os
 import time
+import sys
 
 from programs.registry import discover_programs
+
+
+def _stop_hardware():
+    # Ne charge pas de dépendances matérielles si le programme n'en a pas utilisé.
+    hardware = sys.modules.get("programs.hardware")
+    if hardware is not None:
+        hardware.emergency_stop()
 
 
 def _print_header(selected, programs):
@@ -37,6 +45,9 @@ def _run_program(program_name, programs):
     except Exception as e:
         print(f"ERREUR: Programme '{program_name}' crashe: {e}")
         return False
+    finally:
+        # Également exécuté lors d'un retour normal ou d'une interruption REPL.
+        _stop_hardware()
 
 
 def _run_safe_mode(programs):
