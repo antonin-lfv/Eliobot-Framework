@@ -34,8 +34,6 @@ L’interface utilise le violet ElioBot **#574F96**, des fonds lavande discrets 
 
 ### Agent IA et outils MCP
 
-Pour comprendre le code pas à pas : **[Cours — chatbot, LLM, MCP et interface ElioBot](COURS_CHATBOT_MCP.md)**, avec extraits du projet, schémas, exercices et questions corrigées.
-
 Le bouton **Assistant ElioBot**, en bas à droite sur les deux pages, ouvre un agent conversationnel avec **Gemini ou Ollama**. Il interprète la demande, appelle des outils et utilise leurs résultats pour répondre. Exemples : « Quel est ton état ? », « Tourne de 70 degrés à droite », « Mets l’exploration en pause ».
 
 **MCP (Model Context Protocol)** relie l’agent aux capacités du robot : le client intégré initialise une session, découvre les outils et appelle le serveur MCP local. Ces outils passent par le contrôle FastAPI existant, puis MQTT transmet les commandes à ElioBot.

@@ -1,7 +1,5 @@
 # Assistant ElioBot : chat, Gemini, Ollama et MCP
 
-Pour apprendre comment cette fonctionnalité est construite, lire le **[cours pas à pas à partir du code du projet](COURS_CHATBOT_MCP.md)**. Ce guide reste consacré à l’installation et à l’utilisation.
-
 Le bouton **Assistant ElioBot** ouvre un chat sur les pages de pilotage et du laboratoire.
 Le modèle comprend la demande ; un client MCP appelle les outils du serveur local ; ces outils utilisent le contrôle FastAPI existant et MQTT. Aucune commande shell, gestion d'installation ou clé API n'est accessible au modèle.
 

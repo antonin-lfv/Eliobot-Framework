@@ -36,7 +36,7 @@ Le dashboard intègre **Assistant ElioBot**, un agent conversationnel utilisant 
 
 L’agent utilise **MCP (Model Context Protocol)** pour découvrir et appeler six outils : lire l’état, se déplacer, tourner, régler la vitesse, gérer une autonomie et arrêter le robot. Le serveur vérifie chaque action puis la transmet à ElioBot par MQTT. Les résultats des outils sont visibles dans la conversation ; les rotations restent approximatives et les mouvements sont limités en durée et en vitesse.
 
-**[Découvrir l’agent et son fonctionnement MCP dans le README du dashboard →](server/control-dashboard/README.md#agent-ia-et-outils-mcp)** · [Configurer Gemini, Ollama ou un client MCP](server/control-dashboard/ASSISTANT.md) · [Cours guidé sur le code](server/control-dashboard/COURS_CHATBOT_MCP.md)
+**[Découvrir l’agent et son fonctionnement MCP dans le README du dashboard →](server/control-dashboard/README.md#agent-ia-et-outils-mcp)** · [Configurer Gemini, Ollama ou un client MCP](server/control-dashboard/ASSISTANT.md)
 
 ![Assistant ElioBot intégré au dashboard](server/control-dashboard/image-assistant.png)
 
@@ -80,7 +80,6 @@ Projets-eliobot/
         ├── docker-compose.yml
         ├── README.md                # Installation, pilotages et dépannage
         ├── ASSISTANT.md             # Agent IA, Gemini, Ollama et MCP
-        ├── COURS_CHATBOT_MCP.md     # Cours guidé à partir du code
         ├── FLY.md                   # Modèle neuronal et protocole mouche
         ├── prepare_fly.py           # Préparation des caches Pytorch_fly
         ├── fly-data/                # Caches locaux, exclus de Git

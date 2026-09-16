@@ -22,3 +22,6 @@ server/control-dashboard/fly-data/
 server/control-dashboard/assistant-data/
 server/control-dashboard/assistant-runtime/
 .pytest_cache/
+
+# Cours personnel, conservé uniquement en local
+server/control-dashboard/COURS_CHATBOT_MCP.md
