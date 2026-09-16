@@ -104,7 +104,7 @@ Projets-eliobot/
 Cloner le projet :
 
 ```bash
-git clone https://github.com/antonin-lfv/Projets-Eliobot.git
+git clone https://github.com/antonin-lfv/Eliobot-Framework.git
 ```
 
 Et ouvrir un terminal dans le dossier du projet.
