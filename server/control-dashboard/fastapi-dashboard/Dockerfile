@@ -6,8 +6,9 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Installer les dépendances en premier (couche cachée)
-COPY pyproject.toml ./
-RUN uv pip install --system -r pyproject.toml
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+ENV PATH="/app/.venv/bin:$PATH"
 
 # Copier le code source
 COPY . .

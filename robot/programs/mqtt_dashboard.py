@@ -350,6 +350,7 @@ def run():
                 mqtt_client.publish("elio/telemetry/status", json.dumps({
                     "protocol": 2,
                     "line_threshold": LINE_THRESHOLD,
+                    "turn_factor": TURN_FACTOR,
                     "position_valid": state["position_valid"],
                     "last_error": state["last_error"],
                 }))

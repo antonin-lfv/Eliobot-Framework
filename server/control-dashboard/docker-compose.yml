@@ -28,12 +28,31 @@ services:
       - MQTT_PORT=1883
       - TZ=Europe/Paris
       - FLY_DATA_DIR=/data/fly
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - ELIO_MCP_TOKEN=${ELIO_MCP_TOKEN:-}
+      - ASSISTANT_DATA_DIR=/data/assistant
+      - ELIO_MANAGER_URL=http://ollama-manager:8090
+      - ELIO_MANAGER_TOKEN_FILE=/run/elio/manager-token
     volumes:
       # Code et interface livrés ensemble dans l'image, après reconstruction.
       - ./fly-data:/data/fly:ro
+      - ./assistant-data:/data/assistant
+      - ./assistant-runtime:/run/elio:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       mosquitto:
         condition: service_healthy
+    networks:
+      - elio-net
+    restart: unless-stopped
+
+  # API privée aux opérations fixes ; le dashboard ne monte pas le socket Docker.
+  ollama-manager:
+    build: ./ollama-manager
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./assistant-runtime:/run/elio
     networks:
       - elio-net
     restart: unless-stopped

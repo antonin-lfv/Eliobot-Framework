@@ -10,6 +10,7 @@ import os
 import random
 import threading
 import time
+import hmac
 from typing import Literal
 
 from fly_brain import FlyBrain
@@ -23,6 +24,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from assistant import Assistant
+from robot_mcp import LiveAPI
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 MQTT_BROKER = os.getenv("MQTT_BROKER", "localhost")
@@ -452,7 +455,11 @@ async def lifespan(app: FastAPI):
     task = asyncio.create_task(_broadcast_loop())
     control_task = asyncio.create_task(_control_loop())
 
-    yield
+    async with assistant.mcp.session_manager.run():
+        try:
+            yield
+        finally:
+            await assistant.close()
 
     # Shutdown
     with _lock:
@@ -477,6 +484,22 @@ app = FastAPI(title="Eliobot Dashboard", lifespan=lifespan)
 
 @app.middleware("http")
 async def fresh_interface(request, call_next):
+    if request.url.path.startswith("/assistant") and request.method not in ("GET", "HEAD"):
+        if request.headers.get("X-Elio-Assistant") != "1":
+            return JSONResponse({"detail": "Requête non autorisée."}, status_code=403)
+        origin = request.headers.get("origin")
+        if origin and origin.rstrip("/") != str(request.base_url).rstrip("/"):
+            return JSONResponse({"detail": "Origine de la requête refusée."}, status_code=403)
+        length = request.headers.get("content-length", "0")
+        if not length.isdigit() or int(length) > 16384:
+            return JSONResponse({"detail": "Requête trop volumineuse."}, status_code=413)
+    if request.url.path.startswith("/mcp"):
+        token = os.getenv("ELIO_MCP_TOKEN", "")
+        if not token or not hmac.compare_digest(request.headers.get("authorization", ""), "Bearer " + token):
+            return JSONResponse({"detail": "Accès MCP externe désactivé ou jeton invalide."}, status_code=401)
+    if request.method == "POST" and request.url.path.startswith("/command/"):
+        # La main de l'utilisateur a priorité avant le prochain appel du modèle.
+        assistant.interrupt()
     response = await call_next(request)
     # Les commandes et la page doivent provenir de la même version du serveur.
     response.headers['Cache-Control'] = 'no-store'
@@ -610,6 +633,8 @@ async def stop():
     with _lock:
         active = _state["control"]["active"]
         _set_active("idle", paused=active if active in ("exploration", "fly") else _state["control"]["paused"])
+        if _state["control"]["reason"]:
+            raise HTTPException(503, "L’arrêt n’a pas pu être transmis. Le délai d’arrêt local du robot reste actif.")
     return {"ok": True}
 
 
@@ -674,6 +699,9 @@ async def cmd_reset_map():
 
 
 # ── Fichiers statiques & page principale ──────────────────────────────────────
+assistant = Assistant(LiveAPI(globals()))
+app.include_router(assistant.router)
+app.mount("/mcp", assistant.mcp_app)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 

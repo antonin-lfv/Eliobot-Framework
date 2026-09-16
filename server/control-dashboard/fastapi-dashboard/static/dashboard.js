@@ -149,11 +149,11 @@ function render(mapChanged = true) {
     const running = control.active === mode, paused = control.paused === mode;
     $(`${mode}-card`).classList.toggle('running', running);
     $(`${mode}-status`).classList.toggle('active', running);
-    $(`${mode}-status`).textContent = running ? 'EN COURS' : paused ? 'EN PAUSE' : 'À L’ARRÊT';
+    $(`${mode}-status`).textContent = running ? 'En cours' : paused ? 'En pause' : 'À l’arrêt';
     $(`${mode}-label`).textContent = running ? 'Mettre en pause' : paused ? 'Reprendre' : mode === 'fly' ? 'Lancer la mouche' : 'Lancer l’exploration';
   }
   const fly = state.fly || {};
-  const availability = {unloaded:'NON CHARGÉ',loading:'CHARGEMENT…',error:'INDISPONIBLE',resetting:'REMISE À ZÉRO…'};
+  const availability = {unloaded:'À charger',loading:'Chargement…',error:'Indisponible',resetting:'Remise à zéro…'};
   if (fly.status !== 'ready') {
     $('fly-status').textContent = availability[fly.status] || 'NON CHARGÉ';
     $('fly-label').textContent = fly.status === 'loading' ? 'Chargement…' : fly.status === 'error' ? 'Réessayer le chargement' : 'Charger le cerveau';
@@ -244,7 +244,7 @@ function clearProbe() {
 }
 function neuronColor(value) {
   const magnitude = Math.min(1,Math.abs(value || 0));
-  if(magnitude < .001) return '#d6dfd9';
+  if(magnitude < .001) return '#e1deeb';
   return value < 0 ? `hsl(262 48% ${78-magnitude*39}%)` : `hsl(143 60% ${78-magnitude*48}%)`;
 }
 function renderNeurons(f) {
@@ -304,12 +304,20 @@ function renderEyes() {
   // Conserver la teinte, éclaircir l’aperçu pour lire aussi les LED peu lumineuses.
   const peak=Math.max(...channels), gain=peak>0?Math.max(1,220/peak):1;
   const color=`rgb(${channels.map(v=>Math.round(v*gain)).join(',')})`;
-  ['left','right'].forEach((side,j)=>[...$(`eye-${side}`).children].forEach((pixel,i)=>{pixel.style.background=online() && pattern[j*64+i]?color:'#25352d';}));
+  ['left','right'].forEach((side,j)=>[...$(`eye-${side}`).children].forEach((pixel,i)=>{pixel.style.background=online() && pattern[j*64+i]?color:'var(--led-off)';}));
 }
 function initialize() {
+  // Sur le pilotage, les capteurs accompagnent les commandes manuelles.
+  if (document.body?.dataset.page === 'control') {
+    const exploration = $('exploration-card'), telemetry = $('telemetry-card');
+    const slot = document.createComment('Emplacement de la télémétrie');
+    exploration.replaceWith(slot);
+    telemetry.replaceWith(exploration);
+    slot.replaceWith(telemetry);
+  }
   if (document.body?.dataset.page === 'fly') {
-    $('page-title').textContent = 'Laboratoire mouche.';
-    $('page-subtitle').textContent = 'Observer le réseau anatomique, de la stimulation à la réponse motrice.';
+    $('page-title').textContent = 'Le labo de la mouche.';
+    $('page-subtitle').textContent = 'Des capteurs aux neurones, des neurones au mouvement.';
   }
   document.querySelectorAll('[data-probe]').forEach(button=>button.addEventListener('click',()=>runProbe(button.dataset.probe)));
   $('show-live').addEventListener('click',()=>{clearProbe();renderNeural();});

@@ -1,0 +1,56 @@
+<aside id="assistant-panel" class="assistant-panel" aria-labelledby="assistant-title" hidden>
+  <header class="assistant-heading">
+    <span class="elio-face" aria-hidden="true">••</span>
+    <div><h2 id="assistant-title">Assistant ElioBot</h2><p id="assistant-engine">Configuration…</p></div>
+    <button id="assistant-settings-open" class="assistant-icon" aria-label="Réglages de l’assistant" title="Réglages">⚙</button>
+    <button id="assistant-close" class="assistant-icon" aria-label="Fermer le chat">×</button>
+  </header>
+  <div id="assistant-messages" class="assistant-messages" role="log" aria-live="polite" aria-relevant="additions">
+    <div id="assistant-welcome" class="assistant-welcome"><span class="eyebrow">UN MESSAGE, UNE ACTION</span><h3>Parlons robot.</h3><p>Je peux consulter mes capteurs, me déplacer et lancer une exploration.</p><div class="assistant-suggestions"><button type="button">Quel est ton état ?</button><button type="button">Que peux-tu faire ?</button></div></div>
+  </div>
+  <div class="assistant-status" id="assistant-status" role="status">Prêt à discuter.</div>
+  <div id="assistant-fallback" class="assistant-fallback" hidden>
+    <strong>Continuer avec Ollama ?</strong>
+    <p id="assistant-fallback-text" role="status">Gemini a atteint une limite. Vous pouvez patienter ou passer à Ollama. Les actions précédentes ne seront pas relancées.</p>
+    <div><button id="assistant-fallback-switch" type="button" class="primary-button">Passer à Ollama</button><button id="assistant-fallback-settings" type="button" class="text-button">Configurer Ollama</button></div>
+  </div>
+  <form id="assistant-chat-form" class="assistant-composer"><label class="sr-only" for="assistant-input">Votre message à ElioBot</label><textarea id="assistant-input" placeholder="Demandez quelque chose à ElioBot…" rows="2" maxlength="2000" required></textarea><button id="assistant-send" class="primary-button" type="submit" aria-label="Envoyer le message">↑</button></form>
+  <div class="assistant-foot"><button id="assistant-cancel" class="text-button" hidden>Interrompre</button><button id="assistant-clear" class="text-button">Effacer le chat</button><button id="assistant-stop" class="assistant-stop">■ Arrêter le robot</button></div>
+</aside>
+
+<dialog id="assistant-settings" class="assistant-settings" aria-labelledby="assistant-settings-title">
+  <div class="assistant-settings-header"><div><span class="eyebrow">VOTRE ASSISTANT</span><h2 id="assistant-settings-title">Choisir son moteur</h2></div><button id="assistant-settings-close" class="assistant-icon" aria-label="Fermer les réglages">×</button></div>
+  <p class="assistant-settings-intro">Le même ElioBot, en local ou avec Gemini. Le pilotage reste sur votre serveur.</p>
+  <form id="assistant-config-form">
+    <fieldset class="engine-options"><legend class="sr-only">Moteur de l’assistant</legend><label><input type="radio" name="assistant-provider" value="gemini"><strong>Gemini</strong><span>Dans le cloud · clé API</span></label><label><input type="radio" name="assistant-provider" value="ollama"><strong>Ollama</strong><span>En local · vos modèles</span></label></fieldset>
+    <section id="assistant-gemini-fields">
+      <label class="assistant-field">Clé API Gemini<input id="assistant-key" type="password" autocomplete="new-password" placeholder="Clé conservée sur le serveur"></label>
+      <p id="assistant-key-status" class="assistant-help"></p>
+      <p class="assistant-help"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Créer une clé dans Google AI Studio ↗</a> · Le quota gratuit dépend du modèle et du projet.</p>
+      <label class="assistant-field">Modèle Gemini<input id="assistant-gemini-model" list="assistant-model-list" required></label>
+    </section>
+    <section id="assistant-ollama-fields" hidden>
+      <label class="assistant-field">Installation<select id="assistant-ollama-kind"><option value="managed">Conteneur géré par ElioBot</option><option value="native">Application sur la machine du serveur</option><option value="remote">Instance sur une autre machine</option></select></label>
+      <label class="assistant-field" id="assistant-url-field">Adresse d’Ollama<input id="assistant-ollama-url" type="url" placeholder="http://host.docker.internal:11434"></label>
+      <div class="assistant-host-info" id="assistant-host-info">Identification de la machine hôte…</div>
+      <details class="assistant-install-guide"><summary>Installation selon votre système</summary><label class="assistant-field">Système de la machine qui exécutera Ollama<select id="assistant-host-system"><option value="Linux">Linux / Raspberry Pi</option><option value="Darwin">macOS</option><option value="Windows">Windows</option></select></label><p id="assistant-platform-guide"></p><p class="assistant-help">Le système du navigateur peut être différent de celui du serveur.</p><a id="assistant-platform-link" target="_blank" rel="noopener noreferrer">Ouvrir le guide officiel ↗</a></details>
+      <label class="assistant-field">Modèle Ollama<input id="assistant-ollama-model" list="assistant-model-list" placeholder="qwen3:4b" required></label>
+      <p class="assistant-help">Repères à valider sur votre machine : Qwen3 1.7B pour commencer avec peu de mémoire ; Qwen3 4B pour davantage de capacités. Prévoir environ 4 Go / 8 Go de RAM disponible respectivement, plus les autres services. Ce sont des estimations, pas une garantie de réactivité.</p>
+    </section>
+    <datalist id="assistant-model-list"></datalist>
+    <div class="assistant-config-actions"><button class="primary-button" id="assistant-save" type="submit">Enregistrer</button><button class="secondary-button" type="button" id="assistant-test">Enregistrer et tester</button></div>
+  </form>
+  <div id="assistant-config-status" class="assistant-config-status" role="status"></div>
+  <section id="assistant-ollama-management" hidden>
+    <div class="assistant-section-heading"><h3>Gérer Ollama</h3><span id="assistant-install-status"></span></div>
+    <p class="assistant-help" id="assistant-storage"></p>
+    <div id="assistant-managed-controls"><label class="assistant-field">Calcul du conteneur<select id="assistant-gpu"><option value="cpu">Processeur (CPU)</option><option value="nvidia">GPU NVIDIA (pilotes requis)</option></select></label><div class="assistant-management-actions"><button class="secondary-button" data-ollama-action="start">Installer / démarrer</button><button class="secondary-button" data-ollama-action="stop">Arrêter le service</button></div></div>
+    <p id="assistant-native-note" class="assistant-help" hidden>Cette instance appartient à sa machine hôte. ElioBot peut s’y connecter et gérer ses modèles avec votre confirmation. Sa désinstallation s’effectue sur cette machine, via le guide officiel ci-dessus.</p>
+    <div class="assistant-management-actions"><button class="secondary-button" data-ollama-action="pull">Télécharger le modèle choisi</button><button class="text-button danger" data-ollama-action="delete">Supprimer ce modèle</button></div>
+    <div id="assistant-job" class="assistant-job" hidden><progress id="assistant-job-progress"></progress><span id="assistant-job-text"></span></div>
+    <div class="assistant-management-actions assistant-destructive"><button class="text-button" data-ollama-action="disconnect">Déconnecter</button><button class="text-button danger" id="assistant-uninstall" data-ollama-action="uninstall">Désinstaller Ollama…</button></div>
+  </section>
+  <p class="assistant-help assistant-mcp-note">Les actions passent par le serveur MCP ElioBot. Le changement de moteur ne rejoue aucune action et n’active jamais le cloud automatiquement.</p>
+</dialog>
+
+<dialog id="assistant-confirm" class="assistant-confirm" aria-labelledby="assistant-confirm-title"><form method="dialog"><span class="eyebrow">GESTION D’OLLAMA</span><h2 id="assistant-confirm-title">Confirmer l’opération</h2><p id="assistant-confirm-copy"></p><label id="assistant-erase-label" class="assistant-erase" hidden><input id="assistant-erase-data" type="checkbox"> Supprimer aussi tous les modèles et les données du conteneur géré</label><div class="dialog-actions"><button class="secondary-button" value="cancel">Annuler</button><button class="primary-button" value="confirm">Confirmer</button></div></form></dialog>

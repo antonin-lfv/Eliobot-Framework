@@ -3,48 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f4f5f4">
+  <meta name="theme-color" content="#574F96">
   <title>Elio — Console de contrôle</title>
   <link rel="stylesheet" href="/static/dashboard.css?v=3">
   <script src="/static/dashboard.js?v=3" defer></script>
+  <link rel="stylesheet" href="/static/assistant.css?v=2">
+  <script src="/static/assistant.js?v=2" defer></script>
 </head>
 <body data-page="__PAGE__">
   <header class="topbar">
-    <a class="brand" href="/" aria-label="Elio, accueil"><span class="brand-mark">e.</span><span>ELIO<span class="brand-sub">CONTROL LAB</span></span></a>
+    <a class="brand" href="/" aria-label="Elio, accueil"><span class="brand-mark">e.</span><span>ElioBot</span></a>
     <nav class="page-nav" aria-label="Navigation principale"><a href="/" class="nav-control">Pilotage</a><a href="/fly" class="nav-fly">Laboratoire mouche</a></nav>
     <div class="top-status"><span class="connection" id="connection"><i></i><span id="connection-label">Connexion…</span></span><span class="top-divider"></span><span class="mono" id="battery-header">— V</span><button class="stop-button" id="stop-all"><span class="stop-square"></span>Tout arrêter <kbd>Esc</kbd></button></div>
   </header>
 
   <main>
     <section class="page-heading">
-      <div><div class="eyebrow">ELIOBOT / ESP32-S3</div><h1 id="page-title">Console de contrôle<span>.</span></h1><p id="page-subtitle">Explorer l’environnement et piloter ElioBot.</p></div>
-      <div class="session-state"><span class="eyebrow">PILOTAGE ACTUEL</span><strong id="active-mode">Veille</strong><span id="session-detail">En attente du robot</span></div>
+      <div><div class="eyebrow">Un moment avec ElioBot</div><h1 id="page-title">On explore<span> ?</span></h1><p id="page-subtitle">Piloter ElioBot, suivre son parcours et essayer de nouvelles idées.</p></div>
+      <div class="session-state"><span class="eyebrow">En ce moment</span><strong id="active-mode">Veille</strong><span id="session-detail">En attente du robot</span></div>
     </section>
     <div class="notice" id="compatibility-notice" role="alert" hidden></div>
     <div class="notice" id="control-notice" hidden></div>
 
     <div class="workspace-grid">
       <section class="panel map-panel" id="exploration-card" aria-labelledby="map-title">
-        <div class="panel-heading"><div><span class="section-number">01 / POSITION</span><h2 id="map-title">Trajectoire d’exploration</h2></div><span class="badge" id="exploration-status">À L’ARRÊT</span></div>
+        <div class="panel-heading"><div><h2 id="map-title">Le parcours</h2></div><span class="badge" id="exploration-status">À L’ARRÊT</span></div>
         <div class="map-wrap">
           <svg id="map" viewBox="0 0 720 330" role="img" aria-label="Trajectoire estimée de l’exploration">
-            <defs><pattern id="map-grid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#dce2df" stroke-width="0.6"/></pattern></defs>
+            <defs><pattern id="map-grid" width="30" height="30" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1" fill="var(--line)" opacity="0.7"/></pattern></defs>
             <rect width="720" height="330" fill="url(#map-grid)"/>
-            <path d="M360 0V330 M0 165H720" stroke="#c6cfca" stroke-width="1" stroke-dasharray="3 5"/>
-            <g id="map-obstacles"></g><path id="map-path" fill="none" stroke="#386653" stroke-width="2.5" stroke-linejoin="round"/>
-            <g id="map-robot" transform="translate(360 165)"><circle r="17" fill="#fafcfb" stroke="#386653" stroke-width="1.5"/><path id="map-heading" d="M0 -8L6 5L0 2L-6 5Z" fill="#386653"/></g>
+            <path d="M360 0V330 M0 165H720" stroke="#d7d2e4" stroke-width="0.7" stroke-dasharray="3 5"/>
+            <g id="map-obstacles"></g><path id="map-path" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>
+            <g id="map-robot" transform="translate(360 165)"><circle r="17" fill="#faf9fd" stroke="var(--accent)" stroke-width="1.5"/><path id="map-heading" d="M0 -8L6 5L0 2L-6 5Z" fill="var(--accent)"/></g>
             <text x="690" y="26" class="map-north">N ↑</text>
           </svg>
           <div class="map-actions"><button class="primary-button" id="exploration-action" disabled><span id="exploration-label">Lancer l’exploration</span><span>↗</span></button></div>
           <div class="map-caption" id="map-caption">Le parcours apparaîtra pendant l’exploration.</div>
-          <span class="map-origin mono">REPÈRE LOCAL · PAS ≈ 15 CM</span>
+          <span class="map-origin mono">Un pas ≈ 15 cm</span>
         </div>
-        <div class="map-footer"><div class="map-metrics"><div><span>X / Y</span><strong id="position" class="mono">— / —</strong></div><div><span>PAS TERMINÉS</span><strong id="step-count" class="mono">0</strong></div><div><span>CELLULES VISITÉES</span><strong id="visited" class="mono">0</strong></div></div><button class="text-button" id="reset-map">Réinitialiser ↺</button></div>
+        <div class="map-footer"><div class="map-metrics"><div><span>X / Y</span><strong id="position" class="mono">— / —</strong></div><div><span>Pas terminés</span><strong id="step-count" class="mono">0</strong></div><div><span>Cases visitées</span><strong id="visited" class="mono">0</strong></div></div><button class="text-button" id="reset-map">Réinitialiser ↺</button></div>
         <p class="footnote" id="position-warning">Position déduite des commandes, sans mesure de distance réelle.</p>
       </section>
 
       <section class="panel manual-panel" aria-labelledby="manual-title">
-        <div class="panel-heading"><div><span class="section-number">02 / TÉLÉCOMMANDE</span><h2 id="manual-title">Pilotage manuel</h2></div><span class="live-dot" id="manual-live"></span></div>
+        <div class="panel-heading"><div><h2 id="manual-title">À vous de guider</h2></div><span class="live-dot" id="manual-live"></span></div>
         <p class="panel-description">Maintenir une direction pour déplacer le robot.</p>
         <div class="dpad" aria-label="Commandes de déplacement">
           <button class="direction up" data-direction="forward" aria-label="Avancer" disabled>↑</button>
@@ -59,39 +61,39 @@
       </section>
     </div>
 
-    <section class="panel fly-entry home-only"><div><span class="eyebrow">EXPÉRIENCE CONNECTOMIQUE</span><h2>Et si un cerveau de mouche guidait ElioBot ?</h2><p>Observer les neurones, tester une stimulation et relier le réseau au robot.</p></div><a class="primary-button" href="/fly">Ouvrir le laboratoire ↗</a></section>
+    <section class="panel fly-entry home-only"><div><span class="eyebrow">Une autre façon d’explorer</span><h2>Et si un cerveau de mouche guidait ElioBot ?</h2><p>Observer les neurones, tester une stimulation et relier le réseau au robot.</p></div><a class="primary-button" href="/fly">Ouvrir le laboratoire ↗</a></section>
     <div class="fly-only fly-toolbar">
       <section class="panel autonomy-card fly-card" id="fly-card">
         <div class="card-top"><span class="brain-symbol" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M16 7C10 0 2 6 6 13C0 17 5 25 11 23C12 29 16 28 16 23M16 7C22 0 30 6 26 13C32 17 27 25 21 23C20 29 16 28 16 23M16 7V23M7 13L12 15M25 13L20 15M11 23L12 19M21 23L20 19"/></svg></span><span class="badge" id="fly-status">NON CHARGÉ</span></div>
         <h3>Connectome MaleCNS</h3><p>Charger le réseau, observer sa réponse, puis lancer le pilotage d’ElioBot lorsque le robot est connecté.</p>
-        <div class="card-bottom"><span class="small-label">176 422 NEURONES · RÉSEAU COMPLET</span><button class="primary-button" id="fly-action"><span id="fly-label">Charger le cerveau</span><span>↗</span></button></div>
+        <div class="card-bottom"><span class="small-label">176 422 neurones · réseau complet</span><button class="primary-button" id="fly-action"><span id="fly-label">Charger le cerveau</span><span>↗</span></button></div>
         <p class="inline-error" id="fly-error" hidden></p>
       </section>
     </div>
 
     <section class="panel neural-panel fly-only" aria-labelledby="neural-title">
-      <div class="panel-heading"><div><span class="section-number">03 / BOUCLE NEURONALE</span><h2 id="neural-title">De l’environnement au mouvement</h2></div><button class="text-button" id="reset-brain" disabled>Réinitialiser l’activité ↺</button></div>
+      <div class="panel-heading"><div><h2 id="neural-title">De l’environnement au mouvement</h2></div><button class="text-button" id="reset-brain" disabled>Réinitialiser l’activité ↺</button></div>
       <div class="experiment-bar"><div><strong id="activity-source">Activité du robot</strong><p id="activity-help">Charger le cerveau pour observer ses neurones.</p></div><div class="probe-buttons" aria-label="Stimulations de test sans mouvement"><button class="secondary-button" data-probe="left" disabled>Stimuler à gauche</button><button class="secondary-button" data-probe="front" disabled>Stimuler devant</button><button class="secondary-button" data-probe="right" disabled>Stimuler à droite</button><button class="text-button" id="show-live">Revenir au robot</button></div></div>
       <div class="neuron-workspace">
-        <section class="neuron-map"><div class="neuron-heading"><h3>Neurones sensoriels LPLC2</h3><span class="small-label">UN POINT = UN NEURONE</span></div><p class="footnote">Disposition par population, sans coordonnées anatomiques. Choisir un point pour suivre son identifiant et son activité.</p><div class="sensory-populations"><div><h4>Gauche <span id="count-left"></span></h4><div class="neuron-dots" id="neurons-left"></div></div><div><h4>Droite <span id="count-right"></span></h4><div class="neuron-dots" id="neurons-right"></div></div></div><p id="selected-neuron" class="neuron-selection">Choisir un neurone pour suivre son activité.</p><div class="neuron-legend"><span class="negative">−1</span><span class="legend-gradient"></span><span class="positive">+1</span><span>Activité signée · gris = repos</span></div><div class="activity-total"><strong id="active-neurons">—</strong><span>neurones du réseau avec |activité| ≥ 0,05</span></div></section>
+        <section class="neuron-map"><div class="neuron-heading"><h3>Neurones sensoriels LPLC2</h3><span class="small-label">Un point, un neurone</span></div><p class="footnote">Disposition par population, sans coordonnées anatomiques. Choisir un point pour suivre son identifiant et son activité.</p><div class="sensory-populations"><div><h4>Gauche <span id="count-left"></span></h4><div class="neuron-dots" id="neurons-left"></div></div><div><h4>Droite <span id="count-right"></span></h4><div class="neuron-dots" id="neurons-right"></div></div></div><p id="selected-neuron" class="neuron-selection">Choisir un neurone pour suivre son activité.</p><div class="neuron-legend"><span class="negative">−1</span><span class="legend-gradient"></span><span class="positive">+1</span><span>Activité signée · gris = repos</span></div><div class="activity-total"><strong id="active-neurons">—</strong><span>neurones du réseau avec |activité| ≥ 0,05</span></div></section>
         <section class="neuron-ranking"><h3>Les plus actifs du réseau</h3><p class="footnote">12 valeurs absolues les plus élevées parmi les 176 422 neurones.</p><div id="top-neurons" class="rank-list"><p class="footnote">Le réseau est au repos.</p></div></section>
       </div>
       <div class="motor-neurons"><div><h3>Réponse motrice individuelle</h3><p class="footnote">Activités DNa02 / DNg13 avant conversion en commandes.</p></div><div id="motor-neurons" class="motor-neuron-grid"></div></div>
       <div class="neural-flow">
-        <div class="flow-block"><div class="flow-title">ENTRÉES SENSORIELLES</div><div class="signal-row"><span>LPLC2 gauche</span><strong id="vision-left" class="mono">—</strong></div><div class="signal-row"><span>LPLC2 droite</span><strong id="vision-right" class="mono">—</strong></div><p>Proximité binaire → stimulation latéralisée</p></div>
+        <div class="flow-block"><div class="flow-title">Ce que le réseau perçoit</div><div class="signal-row"><span>LPLC2 gauche</span><strong id="vision-left" class="mono">—</strong></div><div class="signal-row"><span>LPLC2 droite</span><strong id="vision-right" class="mono">—</strong></div><p>Proximité binaire → stimulation latéralisée</p></div>
         <span class="flow-arrow" aria-hidden="true">→</span>
-        <div class="flow-block network-block"><div class="flow-title">CONNECTOME MALECNS</div><svg id="neural-chart" viewBox="0 0 260 60" aria-label="Activité neuronale moyenne au fil des pas"><path d="M0 50H260" stroke="#dce2df"/><path id="activity-path" fill="none" stroke="#386653" stroke-width="1.5"/></svg><div class="network-stats mono"><span id="neural-steps">0 PAS</span><span id="compute-time">— MS / PAS</span></div></div>
+        <div class="flow-block network-block"><div class="flow-title">Le réseau MaleCNS</div><svg id="neural-chart" viewBox="0 0 260 60" aria-label="Activité neuronale moyenne au fil des pas"><path d="M0 50H260" stroke="var(--line)"/><path id="activity-path" fill="none" stroke="var(--accent)" stroke-width="1.5"/></svg><div class="network-stats mono"><span id="neural-steps">0 PAS</span><span id="compute-time">— MS / PAS</span></div></div>
         <span class="flow-arrow" aria-hidden="true">→</span>
-        <div class="flow-block"><div class="flow-title">SORTIES DNa02 / DNg13</div><div class="signal-row"><span>Gauche / droite</span><strong id="motor-output" class="mono">— / —</strong></div><div class="signal-row"><span>Commande calculée</span><strong id="wheel-output" class="mono">— / —</strong></div><p id="fly-guard">Commandes limitées à ±45 %</p></div>
+        <div class="flow-block"><div class="flow-title">Sa réponse · DNa02 / DNg13</div><div class="signal-row"><span>Gauche / droite</span><strong id="motor-output" class="mono">— / —</strong></div><div class="signal-row"><span>Commande calculée</span><strong id="wheel-output" class="mono">— / —</strong></div><p id="fly-guard">Commandes limitées à ±45 %</p></div>
       </div>
       <details class="science-note"><summary>Ce que cette expérience simule</summary><p>Le câblage provient du connectome MaleCNS v1.0. Sa dynamique à fuite et la traduction des capteurs en stimulation sont des modèles simplifiés, repris du projet Pytorch_fly. Les capteurs gauche et droit stimulent les neurones LPLC2 du même côté ; l’avant stimule les deux. Aucune odeur n’est inventée. La lecture DNa02/DNg13 fournit une vitesse et une rotation converties en commandes de roues. Cela ne reproduit pas un comportement biologique validé. Sans stimulation initiale, le réseau reste au repos. Un obstacle frontal bloque l’avance tout en conservant la rotation demandée par le réseau.</p><a href="https://male-cns.janelia.org/" target="_blank" rel="noopener">Source anatomique : MaleCNS ↗</a></details>
     </section>
 
-    <section class="panel telemetry-panel" aria-labelledby="sensors-title">
-      <div class="panel-heading"><div><span class="section-number">04 / TÉLÉMÉTRIE</span><h2 id="sensors-title">Le robot, maintenant</h2></div><span class="small-label" id="last-signal">AUCUN SIGNAL</span></div>
+    <section class="panel telemetry-panel" id="telemetry-card" aria-labelledby="sensors-title">
+      <div class="panel-heading"><div><h2 id="sensors-title">Le robot, maintenant</h2></div><span class="small-label" id="last-signal">AUCUN SIGNAL</span></div>
       <div class="telemetry-grid">
         <div class="robot-sensors">
-          <div class="telemetry-subheading"><h3>Autour d’ElioBot</h3><span class="small-label">VUE DE DESSUS</span></div>
+          <div class="telemetry-subheading"><h3>Autour d’ElioBot</h3><span class="small-label">Vu de dessus</span></div>
           <div class="robot-stage obstacle-grid" id="obstacle-grid" aria-label="Détection des obstacles autour du robot">
             <div class="robot-portrait"><img src="/static/eliobot.png" alt="ElioBot vu de dessus, avant orienté vers le haut" width="430" height="470"><span class="sensor-beam beam-front" id="beam-front" aria-hidden="true"></span><span class="sensor-beam beam-left" id="beam-left" aria-hidden="true"></span><span class="sensor-beam beam-right" id="beam-right" aria-hidden="true"></span><span class="sensor-beam beam-back" id="beam-back" aria-hidden="true"></span></div>
           </div>
@@ -99,22 +101,23 @@
           <details class="sensor-diagnostics"><summary>Valeurs des 4 capteurs</summary><p>Un obstacle est détecté lorsque la valeur brute est inférieure au seuil. Gauche et droite alimentent la mouche ; l’avant stimule les deux côtés.</p><div class="sensor-diagnostic-head"><span>Capteur</span><span>Valeur / seuil</span></div><div id="sensor-diagnostics"></div><p id="sensor-diagnostic-note">En attente des mesures du robot.</p></details>
         </div>
         <div class="eyes-section">
-          <div class="telemetry-subheading"><h3>Le regard du robot</h3><span class="small-label">EN DIRECT</span></div>
-          <div class="eyes-display"><div class="eyes" role="img" aria-label="Reproduction des deux matrices lumineuses du robot"><div id="eye-left"></div><div id="eye-right"></div></div><span class="eyes-caption" title="Luminosité d’affichage adaptée pour rendre les LED lisibles.">2 MATRICES · 8 × 8 LEDS</span></div>
+          <div class="telemetry-subheading"><h3>Le regard du robot</h3><span class="small-label">En direct</span></div>
+          <div class="eyes-display"><div class="eyes" role="img" aria-label="Reproduction des deux matrices lumineuses du robot"><div id="eye-left"></div><div id="eye-right"></div></div><span class="eyes-caption" title="Luminosité d’affichage adaptée pour rendre les LED lisibles.">Deux yeux · 8 × 8 LED chacun</span></div>
           <div class="audio-actions">
             <button class="audio-button" id="mute" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4 6 8H3v8h3l5 4Z"/><g id="sound-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path id="sound-cross" d="m16 9 6 6m0-6-6 6" style="display:none"/></svg><span id="mute-label">Couper le son</span></button>
             <button class="audio-button" id="buzzer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v13M9 9l11-2"/><ellipse cx="6" cy="18" rx="3" ry="2.5"/><ellipse cx="17" cy="16" rx="3" ry="2.5"/></svg><span>Tester le son</span></button>
           </div>
         </div>
-        <div class="line-section"><div class="telemetry-subheading"><h3>Capteurs de ligne</h3><span class="small-label">SOUS LE ROBOT</span></div><div class="line-readings" id="line-readings"></div><span class="footnote">Valeurs brutes · sombre sous le seuil calibré</span></div>
+        <div class="line-section"><div class="telemetry-subheading"><h3>Capteurs de ligne</h3><span class="small-label">Sous le robot</span></div><div class="line-readings" id="line-readings"></div><span class="footnote">Valeurs brutes · sombre sous le seuil calibré</span></div>
       </div>
     </section>
 
     <details class="panel log-panel home-only"><summary>Journal d’exploration <span id="log-count">0 étapes</span></summary><div class="table-wrap"><table><thead><tr><th>Heure</th><th>Position</th><th>Action</th><th>Avant</th><th>Gauche</th><th>Droite</th></tr></thead><tbody id="log-body"></tbody></table></div></details>
-    <footer class="page-footer"><span>ELIO / CONTROL LAB</span><span>Calcul sur serveur · commande sur robot</span><span class="mono" id="server-host"></span></footer>
+    <footer class="page-footer"><span>ElioBot · Le plaisir d’explorer</span><span class="mono" id="server-host"></span></footer>
   </main>
 
   <dialog id="takeover-dialog" aria-labelledby="takeover-title"><form method="dialog"><span class="eyebrow">REPRISE MANUELLE</span><h2 id="takeover-title">Mettre l’exploration en pause ?</h2><p id="takeover-copy">La reprise manuelle interrompt le comportement autonome. Vous pourrez le relancer depuis sa carte.</p><div class="dialog-actions"><button class="secondary-button" id="takeover-cancel" value="cancel">Annuler</button><button class="primary-button" id="takeover-confirm" type="button">Reprendre la main</button></div></form></dialog>
   <div class="toast" id="toast" role="status" hidden></div>
+  <button id="assistant-launch" class="assistant-launch" aria-controls="assistant-panel" aria-expanded="false"><span class="elio-face" aria-hidden="true">••</span> Assistant ElioBot <span aria-hidden="true">↗</span></button>
 </body>
 </html>

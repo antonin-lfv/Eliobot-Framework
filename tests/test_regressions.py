@@ -135,6 +135,19 @@ class Robot:
 
 
 class RobotTests(unittest.TestCase):
+    def test_robot_shares_turn_calibration_with_dashboard(self):
+        robot = Robot()
+        real_open = open
+        def config_file(path, *args, **kwargs):
+            if path == '/config.json':
+                return io.StringIO(json.dumps({'turn_factor':1.4}))
+            return real_open(path, *args, **kwargs)
+        with patch('builtins.open', config_file):
+            robot.run([None] * 12)
+        statuses = [json.loads(p) for t, p in robot.published if t.endswith('/status')]
+        self.assertTrue(statuses)
+        self.assertEqual(statuses[-1]['turn_factor'], 1.4)
+
     def test_manual_eyes_are_sent_on_change_and_other_telemetry_is_not_starved(self):
         robot=Robot();robot.loop_delay=400
         def start(r):r.send('mode','manual');r.send('move','forward')

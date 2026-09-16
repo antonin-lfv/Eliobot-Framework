@@ -19,3 +19,6 @@ CLAUDE.md
 AGENTS.md
 # Cache anatomique externe, préparé depuis Pytorch_fly
 server/control-dashboard/fly-data/
+server/control-dashboard/assistant-data/
+server/control-dashboard/assistant-runtime/
+.pytest_cache/

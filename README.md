@@ -28,7 +28,17 @@ Il y a deux façons d'utiliser ce framework :
 | **Principe** | Un programme tourne directement sur le robot | Le robot est piloté à distance par un serveur |
 | **Matériel requis** | Robot seul | Robot + Raspberry Pi ou ordinateur avec Docker |
 | **Programmes** | `web_server`, `obstacles`, `line_follower`, `ir_control`, `dance`, `animations_fire` | `mqtt_dashboard` |
-| **Cas d'usage** | Comportements autonomes embarqués | Pilotage à distance, exploration cartographique et expérience connectomique de mouche |
+| **Cas d'usage** | Comportements autonomes embarqués | Pilotage à distance, agent IA avec MCP, exploration cartographique et expérience connectomique de mouche |
+
+## Un agent IA pour discuter avec ElioBot et le piloter
+
+Le dashboard intègre **Assistant ElioBot**, un agent conversationnel utilisant **Gemini ou un modèle local via Ollama**. Demander « Quel est ton état ? », « Tourne de 70 degrés à droite » ou « Lance l’exploration » permet de consulter le robot et d’agir depuis le chat.
+
+L’agent utilise **MCP (Model Context Protocol)** pour découvrir et appeler six outils : lire l’état, se déplacer, tourner, régler la vitesse, gérer une autonomie et arrêter le robot. Le serveur vérifie chaque action puis la transmet à ElioBot par MQTT. Les résultats des outils sont visibles dans la conversation ; les rotations restent approximatives et les mouvements sont limités en durée et en vitesse.
+
+**[Découvrir l’agent et son fonctionnement MCP dans le README du dashboard →](server/control-dashboard/README.md#agent-ia-et-outils-mcp)** · [Configurer Gemini, Ollama ou un client MCP](server/control-dashboard/ASSISTANT.md) · [Cours guidé sur le code](server/control-dashboard/COURS_CHATBOT_MCP.md)
+
+![Assistant ElioBot intégré au dashboard](server/control-dashboard/image-assistant.png)
 
 ## Un connectome de mouche aux commandes d’ElioBot
 
@@ -69,12 +79,16 @@ Projets-eliobot/
     └── control-dashboard/           # Cerveau - Raspberry Pi / Docker
         ├── docker-compose.yml
         ├── README.md                # Installation, pilotages et dépannage
+        ├── ASSISTANT.md             # Agent IA, Gemini, Ollama et MCP
+        ├── COURS_CHATBOT_MCP.md     # Cours guidé à partir du code
         ├── FLY.md                   # Modèle neuronal et protocole mouche
         ├── prepare_fly.py           # Préparation des caches Pytorch_fly
         ├── fly-data/                # Caches locaux, exclus de Git
         ├── mosquitto/
         └── fastapi-dashboard/
             ├── app.py               # Cerveau exploration + WebSocket + REST
+            ├── assistant.py         # Conversation et boucle de l’agent
+            ├── robot_mcp.py         # Outils MCP de contrôle du robot
             ├── fly_brain.py         # Calcul neuronal sur le connectome complet
             └── static/
                 ├── index.html       # Pages pilotage et laboratoire mouche
@@ -90,7 +104,7 @@ Projets-eliobot/
 Cloner le projet :
 
 ```bash
-git clone https://github.com/antonin-lfv/Eliobot-Framework.git
+git clone https://github.com/antonin-lfv/Projets-Eliobot.git
 ```
 
 Et ouvrir un terminal dans le dossier du projet.
@@ -209,7 +223,7 @@ def run():
 |---|---|
 | `obstacle_thresholds` | Quatre seuils entiers 1–65535, dans l’ordre gauche, avant, droite, arrière ; détection si valeur brute < seuil |
 | `line_threshold` | Ligne sombre si `ambient − lit < line_threshold` ; valeurs brutes de −65535 à 65535 |
-| `turn_factor` | Multiplicateur de durée de rotation en exploration, de 0.1 à 5 |
+| `turn_factor` | Multiplicateur de durée de rotation en exploration et dans le chat, de 0.1 à 5 |
 | `move_factor` | Multiplicateur de durée d’avancement en exploration, de 0.1 à 5 |
 
 Les seuils d’obstacles sont chargés par `setup_obstacle_sensors()` au démarrage et partagés par les modes manuel (télémétrie), exploration et mouche. Les valeurs par défaut restent à 10000, comme dans la [bibliothèque officielle](https://docs.eliobot.com/docs/python_lib/obstacle-sensor). Par exemple, `[15000, 10000, 15000, 10000]` relève uniquement les seuils gauche et droit. Un seuil plus élevé accepte davantage de valeurs comme obstacle ; il ne correspond pas à une distance en centimètres.
@@ -263,6 +277,8 @@ Pour trouver le nom du robot, on peut taper : `ls /dev/cu.usbmodem*`
 
 ## Installation du serveur
 
+Prérequis : Python 3.11+ et Docker avec Compose v2 sur le serveur. Le lanceur vérifie leur disponibilité.
+
 ```bash
 # On copie sur le Raspberry Pi (à lancer depuis votre machine locale)
 rsync -av server/control-dashboard/ root@DietPi:~/eliobot-server/control-dashboard/
@@ -277,7 +293,8 @@ Dashboard accessible sur `http://<IP_DU_PI>:8000`.
 **Services Docker :**
 
 - `mosquitto` - broker MQTT Eclipse Mosquitto 2.x (port `1883`)
-- `dashboard` - FastAPI + WebSocket (port `8000`)
+- `dashboard` - FastAPI + WebSocket, agent IA et serveur MCP (port `8000`)
+- `ollama-manager` - gestion privée de l’instance Ollama optionnelle, sans port publié
 
 ## Lancer le serveur en local sur son ordinateur
 
@@ -340,12 +357,13 @@ Puis déployez le programme `mqtt_dashboard` sur le robot :
 ## Fonctionnalités du dashboard
 
 <p align="center">
-  <img src="server/control-dashboard/image-dashboard.png" alt="Console de contrôle">
+  <img src="server/control-dashboard/image-dashboard.png" alt="Dashboard ElioBot : télémétrie et commandes manuelles de même hauteur, exploration en dessous">
 </p>
 
 | Section | Description |
 |---|---|
 | **En-tête** | Statut de connexion, tension batterie et bouton Tout arrêter |
+| **Agent IA avec MCP** | Chat Gemini ou Ollama ; outils de lecture des capteurs, mouvement, rotation, vitesse, autonomie et arrêt |
 | **Pilotage manuel** | D-Pad avec confirmation de reprise (expiration 800 ms), vitesse 0–100 |
 | **Télémétrie** | Vue du robot et zones de détection, valeurs brutes/seuils des quatre capteurs, grandes matrices LED, capteurs de ligne et boutons son |
 | **Exploration** | Carte estimée du chemin, boutons Lancer/Pause/Reprendre, réinitialisation avec arrêt, journal des étapes |
@@ -359,6 +377,8 @@ Puis déployez le programme `mqtt_dashboard` sur le robot :
 | **Exploration** | Le serveur envoie une commande identifiée à chaque étape, avec reprise sur perte de message |
 | **Mouche** | Réseau anatomique MaleCNS complet, lecture neuronale des capteurs et commandes de roues |
 | **Idle** | Robot en veille, moteurs coupés (défaut à la connexion) |
+
+La télémétrie et le pilotage manuel occupent deux cartes de même hauteur, côte à côte sur ordinateur. La carte d’exploration est placée plus bas en pleine largeur. L’interface reprend le violet ElioBot **#574F96** et s’adapte aux petits écrans.
 
 ## Mouche connectomique et gestion du pilotage
 
