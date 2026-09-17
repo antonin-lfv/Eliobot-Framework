@@ -14,6 +14,9 @@ from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import Field
 
 
+MAX_TURN_SECONDS = 30
+
+
 class LiveAPI:
     def __init__(self, namespace):
         self.namespace = namespace
@@ -60,6 +63,10 @@ class RobotActions:
         # Vérification aussi ici pour les appels internes et les valeurs non finies.
         if direction not in ("forward", "backward", "left", "right") or not 0.1 <= duration <= 3 or not 1 <= speed <= 70:
             raise ValueError("Mouvement limité à 0,1–3 secondes et une vitesse de 1–70 %.")
+        return await self._run_movement(generation, direction, duration, speed)
+
+    async def _run_movement(self, generation, direction, duration, speed):
+        """Exécuter une durée déjà validée, avec les mêmes contrôles à chaque commande."""
         with self.api._lock:
             self.check(generation)
             if self.moving:
@@ -119,9 +126,9 @@ class RobotActions:
         pwm = int(speed / 100 * 65535) / 65535
         rps = 20.3 * battery / 60 * pwm
         duration = degrees / (360 * rps) * (77.5 / 33.5) * factor
-        if not .1 <= duration <= 3:
-            raise ValueError("La durée estimée de cette rotation sort de la limite de 0,1–3 secondes. Choisir un angle ou une vitesse adaptés.")
-        result = await self.move(generation, direction, duration, speed)
+        if not .1 <= duration <= MAX_TURN_SECONDS:
+            raise ValueError(f"La durée estimée de cette rotation ({duration:.1f} s) sort de la limite de 0,1–{MAX_TURN_SECONDS} secondes. Vérifier l’angle, la vitesse et la calibration.")
+        result = await self._run_movement(generation, direction, duration, speed)
         return {**result, "requested_degrees": degrees, "direction": direction, "approximate": True,
                 "duration": round(duration, 3), "turn_factor": factor, "calibration_source": factor_source,
                 "battery_v": battery, "battery_source": battery_source,
@@ -161,7 +168,7 @@ def build_mcp(actions):
     async def turn_robot(generation: int, direction: Literal["left", "right"],
                          degrees: Annotated[float, Field(ge=1, le=360)],
                          speed: Annotated[int, Field(ge=15, le=70)] = 35) -> dict:
-        """Tourner d'un angle APPROXIMATIF en degrés (ex. 70 à droite). Calcule la durée avec la batterie et le facteur du robot, sinon des valeurs nominales. Pas de mesure d'angle. Refuse si la durée dépasse 3 secondes ou si une autonomie est en cours."""
+        """Tourner d'un angle APPROXIMATIF en degrés (ex. 70 à droite). Calcule la durée avec la batterie et le facteur du robot, sinon des valeurs nominales. Pas de mesure d'angle. Un tour complet correspond à 360 degrés. Durée calculée limitée à 30 secondes, commandes renouvelées toutes les 150 ms et arrêt interruptible. Refuse si une autonomie est en cours."""
         return await actions.turn(generation, direction, degrees, speed)
 
     @mcp.tool()
@@ -185,7 +192,7 @@ def build_mcp(actions):
 @asynccontextmanager
 async def local_mcp_client(mcp_app):
     """Vrai protocole MCP via HTTP ASGI en mémoire, sans ouvrir de port supplémentaire."""
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=mcp_app), timeout=15) as http:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=mcp_app), timeout=MAX_TURN_SECONDS + 10) as http:
         async with streamable_http_client("http://elio.local/", http_client=http) as (read, write, _):
             async with ClientSession(read, write) as session:
                 await session.initialize()

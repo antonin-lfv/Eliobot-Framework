@@ -47,7 +47,7 @@ Le bouton **Assistant ElioBot**, en bas à droite sur les deux pages, ouvre un a
 | `set_autonomy` | Lancer ou mettre en pause l’exploration ou la mouche |
 | `stop_robot` | Arrêter le robot |
 
-Le chat affiche les actions et leurs résultats. Les déplacements sont limités à **0,1–3 secondes** et **70 % de vitesse maximum**. Une reprise manuelle ou un arrêt invalide les actions en attente ; l’agent respecte la confirmation de reprise depuis une autonomie. Une commande envoyée ne prouve pas que le déplacement physique a été réalisé.
+Le chat affiche les actions et leurs résultats. Les déplacements temporisés sont limités à **0,1–3 secondes** et **70 % de vitesse maximum**. Les rotations en degrés peuvent durer jusqu’à **30 secondes**, notamment pour « Fais un tour sur toi-même » (360° approximatifs), avec les mêmes contrôles d’interruption. Une reprise manuelle ou un arrêt invalide les actions en attente ; l’agent respecte la confirmation de reprise depuis une autonomie. Une commande envoyée ne prouve pas que le déplacement physique a été réalisé.
 
 ![Agent ElioBot : conversation intégrée au dashboard](image-assistant.png)
 

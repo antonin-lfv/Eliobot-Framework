@@ -119,7 +119,7 @@ Pour retirer entièrement cette fonctionnalité, désinstaller d'abord l'instanc
 - Le changement de moteur conserve les messages et les résultats passés, mais aucun appel d'outil ancien n'est réexécuté.
 - Une demande à la fois, au plus huit étapes de modèle et huit outils par étape, délai global de trois minutes.
 - Les étapes et résultats arrivent immédiatement dans le chat ; le texte final est affiché à la fin de sa génération.
-- Un déplacement dure de 0,1 à 3 secondes, à une vitesse de 1 à 70 %. Le serveur renouvelle les commandes toutes les 150 ms puis envoie l'arrêt. Le robot conserve son délai local de 800 ms.
+- Un déplacement temporisé (`move_robot`) dure de 0,1 à 3 secondes, à une vitesse de 1 à 70 %. Une rotation en degrés (`turn_robot`) peut durer jusqu’à 30 secondes pour permettre un tour complet. Dans les deux cas, le serveur renouvelle les commandes toutes les 150 ms puis envoie l’arrêt ; le robot conserve son délai local de 800 ms.
 - Une reprise manuelle, un Stop ou une annulation invalide les commandes en attente. Une réponse calculée avant un changement de mode n'est pas exécutée.
 - Le chat ne contourne pas la confirmation de reprise manuelle depuis une autonomie. La reprise se fait depuis le dashboard.
 - Une déconnexion pendant le flux du chat annule la demande en cours et arrête les actions qu'elle possède. Fermer seulement le panneau conserve la connexion et la demande.
@@ -132,7 +132,7 @@ Pour retirer entièrement cette fonctionnalité, désinstaller d'abord l'instanc
 
 Le programme `mqtt_dashboard` transmet maintenant `turn_factor` depuis `robot/config.json`. Redéployer ce programme pour appliquer sa calibration aux rotations du chat. Avec un ancien programme, le facteur utilisé est 1 ; en l'absence de mesure de batterie, la tension nominale utilisée est 3,7 V. Ces valeurs de remplacement sont indiquées dans le détail de l'action. Le réglage se calibre sur le sol utilisé : `nouveau facteur = ancien facteur × angle demandé / angle observé`, puis redéployer la configuration et redémarrer le programme. Il peut varier avec la vitesse et l'adhérence.
 
-L'outil accepte 1–360° et 15–70 % (35 % par défaut), mais refuse toute combinaison dont la durée calculée sort de 0,1–3 secondes, sans tronquer l'angle ni contourner la limite. Les règles de connexion, de reprise manuelle et d'interruption sont celles des autres déplacements.
+« **Fais un tour sur toi-même** » demande 360° avec `turn_robot` (à droite si aucun sens n’est précisé). L’outil accepte 1–360° et 15–70 % (35 % par défaut). Sa durée calculée est limitée à **0,1–30 secondes**, sans tronquer l’angle ni augmenter automatiquement la vitesse. Les commandes continuent d’être renouvelées toutes les 150 ms : Stop, reprise manuelle, annulation et perte de connexion interrompent la rotation comme les autres déplacements. La limite de `move_robot` reste à 3 secondes.
 
 ## MCP
 

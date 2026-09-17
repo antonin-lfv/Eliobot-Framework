@@ -132,10 +132,85 @@ async def test_mcp_turn_70_degrees_sends_right_then_stop(server):
     assert moves[-1] == 'stop'
 
 
+@pytest.fixture
+def movement_clock(monkeypatch):
+    # Horloge isolée du transport MCP et de la fraîcheur des capteurs.
+    import robot_mcp
+    from types import SimpleNamespace
+    clock = SimpleNamespace(now=0.0, after_sleep=None)
+    async def sleep(delay):
+        clock.now += delay
+        if clock.after_sleep:
+            await clock.after_sleep()
+        await asyncio.sleep(0)
+    monkeypatch.setattr(robot_mcp, 'time', SimpleNamespace(monotonic=lambda: clock.now))
+    monkeypatch.setattr(robot_mcp, 'asyncio', SimpleNamespace(sleep=sleep))
+    return clock
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('direction,speed', [('right', 35), ('left', 15)])
+async def test_full_turn_uses_real_mcp_and_keeps_command_heartbeat(server, movement_clock, direction, speed):
+    server._state['battery_v'] = 3.8
+    server._state['status']['turn_factor'] = 1
+    sent = []
+    server._publish.side_effect = lambda topic, payload: sent.append((movement_clock.now, topic, payload)) or True
+    async with server.assistant.mcp.session_manager.run():
+        async with local_mcp_client(server.assistant.mcp_app) as client:
+            result = await client.call_tool('turn_robot', {'generation':0, 'direction':direction, 'degrees':360, 'speed':speed})
+    assert not result.isError
+    data = result.structuredContent or json.loads(result.content[0].text)
+    expected = (77.5 / 33.5) / (20.3 * 3.8 / 60 * (int(speed / 100 * 65535) / 65535))
+    assert data['duration'] == pytest.approx(expected, abs=.001)
+    assert 3 < data['duration'] <= 30
+    assert data['requested_degrees'] == 360 and data['approximate']
+    assert not data['physical_completion_confirmed']
+    moves = [(t, value) for t, topic, value in sent if topic == 'elio/command/move']
+    assert set(value for _, value in moves[:-1]) == {direction}
+    assert moves[-1][1] == 'stop'
+    assert moves[-1][0] == pytest.approx(expected)
+    assert max(b[0] - a[0] for a, b in zip(moves, moves[1:])) <= .150001
+    assert not server.assistant.actions.moving
+    # Une rotation longue ne doit pas élargir l'outil de déplacement générique.
+    with pytest.raises(ValueError):
+        await server.assistant.actions.move(0, 'forward', 4, 35)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('interruption', ['stop', 'takeover', 'disconnect', 'cancel'])
+async def test_long_turn_can_be_interrupted_after_three_seconds(server, movement_clock, interruption):
+    from fastapi import HTTPException
+    actions = server.assistant.actions
+    interrupted_at = []
+    async def interrupt():
+        if movement_clock.now < 3.1 or interrupted_at:
+            return
+        interrupted_at.append(movement_clock.now)
+        if interruption == 'cancel':
+            raise asyncio.CancelledError()
+        if interruption == 'disconnect':
+            server._state['connected'] = False
+        elif interruption == 'stop':
+            await actions.stop()
+        else:
+            actions.invalidate()
+            await server.cmd_move(server.MoveCmd(direction='forward'))
+    movement_clock.after_sleep = interrupt
+    error = asyncio.CancelledError if interruption == 'cancel' else HTTPException if interruption == 'disconnect' else ValueError
+    with pytest.raises(error):
+        await actions.turn(0, 'right', 360, 35)
+    assert interrupted_at and movement_clock.now == interrupted_at[0]
+    assert not actions.moving
+    moves = [call.args[1] for call in server._publish.call_args_list if call.args[0] == 'elio/command/move']
+    assert moves[-1] == ('forward' if interruption == 'takeover' else 'stop')
+    if interruption == 'takeover':
+        assert moves[-2] == 'stop'  # L'ancien finally ne doit pas couper le nouveau pilote.
+
+
 @pytest.mark.asyncio
 async def test_turn_supports_older_robot_and_calibration_changes_duration(server):
     actions = server.assistant.actions
-    actions.move = AsyncMock(return_value={'physical_completion_confirmed':False})
+    actions._run_movement = AsyncMock(return_value={'physical_completion_confirmed':False})
     default = await actions.turn(0, 'left', 70, 35)
     assert default['calibration_source'] == 'default'
     assert default['battery_source'] == 'nominal'
@@ -149,7 +224,7 @@ async def test_turn_supports_older_robot_and_calibration_changes_duration(server
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize('degrees,speed,factor,battery', [
-    (float('nan'),35,1,3.8), (70,100,1,3.8), (360,15,1,3.8),
+    (float('nan'),35,1,3.8), (70,100,1,3.8), (360,15,5,2),
     (1,70,1,3.8), (70,35,float('inf'),3.8), (70,35,1,float('nan')),
 ])
 async def test_invalid_turn_never_moves(server, degrees, speed, factor, battery):

@@ -21,6 +21,12 @@
     el('assistant-config-status').textContent = text;
     el('assistant-config-status').classList.toggle('error', error);
   }
+  function resizeInput() {
+    const input = el('assistant-input');
+    if (!input || el('assistant-panel').hidden) return;
+    input.style.height = 'auto';
+    input.style.height = `${input.scrollHeight}px`;
+  }
   function scroll() { const box = el('assistant-messages'); box.scrollTop = box.scrollHeight; }
   function message(role, text) {
     el('assistant-welcome').hidden = true;
@@ -72,7 +78,7 @@
   }
   async function send(text) {
     if (busy || !text.trim()) return;
-    fallback(null); message('user', text.trim()); el('assistant-input').value = ''; setBusy(true);
+    fallback(null); message('user', text.trim()); el('assistant-input').value = ''; resizeInput(); setBusy(true);
     el('assistant-status').textContent = 'Connexion au modèle…';
     try {
       const response = await fetch('/assistant/chat', {method:'POST', headers:{'Content-Type':'application/json','X-Elio-Assistant':'1'}, body:JSON.stringify({session, message:text.trim()})});
@@ -231,6 +237,8 @@
     const template = document.createElement('template'); template.innerHTML = await response.text(); document.body.append(template.content);
     ready = true;
     el('assistant-close').addEventListener('click', () => { el('assistant-panel').hidden = true; el('assistant-launch').hidden = false; el('assistant-launch').setAttribute('aria-expanded','false'); el('assistant-launch').focus(); });
+    el('assistant-input').addEventListener('input', resizeInput);
+    window.addEventListener('resize', resizeInput);
     el('assistant-chat-form').addEventListener('submit', event => { event.preventDefault(); send(el('assistant-input').value); });
     el('assistant-input').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); send(el('assistant-input').value); } });
     document.querySelectorAll('.assistant-suggestions button').forEach(button => button.addEventListener('click', () => send(button.textContent)));
@@ -251,7 +259,7 @@
   el('assistant-launch').addEventListener('click', async () => {
     try {
       await init(); config = await api('/config'); populate(); await loadHistory();
-      el('assistant-panel').hidden = false; el('assistant-launch').hidden = true; el('assistant-launch').setAttribute('aria-expanded','true'); el('assistant-input').focus();
+      el('assistant-panel').hidden = false; el('assistant-launch').hidden = true; el('assistant-launch').setAttribute('aria-expanded','true'); resizeInput(); el('assistant-input').focus();
     } catch(error) { if (typeof notify === 'function') notify(error.message); }
   });
 })();

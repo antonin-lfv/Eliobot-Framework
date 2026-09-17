@@ -10,7 +10,7 @@ function assistant(switchResponse = {ok:true}) {
   const nodes = new Map(), requests = [];
   const config = {provider:'gemini', gemini_model:'test', ollama_model:'qwen3:4b', ollama_enabled:true, ollama_kind:'managed', ollama_url:'http://ollama:11434'};
   function element() {
-    return {hidden:false, disabled:false, value:'', textContent:'', children:[], listeners:{},
+    return {style:{}, scrollHeight:46, hidden:false, disabled:false, value:'', textContent:'', children:[], listeners:{},
       classList:{toggle(){}}, append(...items){this.children.push(...items);}, replaceChildren(...items){this.children=items;},
       querySelectorAll(){return [];}, addEventListener(name,fn){this.listeners[name]=fn;},
       setAttribute(){}, removeAttribute(){}, focus(){}, showModal(){this.open=true;}, close(){this.open=false;}};
@@ -21,7 +21,7 @@ function assistant(switchResponse = {ok:true}) {
     querySelector:selector=>get(selector)};
   const failure = {code:'quota_exceeded', provider:'gemini', suggested_provider:'ollama'};
   const events = [{type:'error', text:'Quota atteint.', ...failure}, {type:'message', role:'assistant', text:'Quota atteint.', error:failure}, {type:'done'}];
-  const context = vm.createContext({document, crypto:webcrypto, sessionStorage:{getItem(){},setItem(){}}, TextDecoder, Uint8Array, setTimeout, clearTimeout,
+  const context = vm.createContext({document, window:{addEventListener(){}}, crypto:webcrypto, sessionStorage:{getItem(){},setItem(){}}, TextDecoder, Uint8Array, setTimeout, clearTimeout,
     fetch:async (url,options={}) => {
       requests.push({url, options});
       if (url === '/static/assistant.html') return {ok:true,text:async()=>'<aside></aside>'};
